@@ -57,7 +57,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       toast({ title: "Success", description: "Item added to inventory." });
       resetDialog();
       onOpenChange(false);
-    } else if (formState.message && formState.errors) {
+    } else if (formState.message && formState.errors && Object.keys(formState.errors).length > 0) {
        // Display errors via form message, not toast
     }
   }, [formState, onOpenChange, form, toast]);
@@ -131,7 +131,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                     </Button>
                 </div>
                  {form.formState.errors.barcode && <p className="text-sm text-destructive">{form.formState.errors.barcode.message}</p>}
-                 <Button type="button" className="w-full" onClick={handleBarcodeLookup} disabled={isFinding}>
+                 <Button type="button" className="w-full gap-2" onClick={handleBarcodeLookup} disabled={isFinding}>
                     {isFinding ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
                     <span>Look up barcode</span>
                 </Button>
@@ -159,7 +159,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                       render={({ field }) => (
                           <DatePicker
                               value={field.value}
-                              onChange={(date) => field.onChange(date)}
+                              onChange={field.onChange}
                               disabled={(date) => date < today}
                           />
                       )}
