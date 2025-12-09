@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { NotFoundException } from '@zxing/library';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CameraOff } from 'lucide-react';
