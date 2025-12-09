@@ -18,26 +18,27 @@ import { cn } from "@/lib/utils";
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
 export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }) {
-    const [today, setToday] = useState<Date | null>(null);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setToday(new Date());
+        setIsClient(true);
     }, []);
 
   const expiringItems = useMemo(() => {
-    if (!today) return [];
+    if (!isClient) return [];
+    const now = new Date();
     return allItems
-      .map(item => ({...item, status: getExpiryStatus(item.expiryDate, today)}))
+      .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
       .filter(item => item.status.status === 'expiring' || item.status.status === 'expired')
       .sort((a,b) => a.status.days - b.status.days);
-  }, [allItems, today]);
+  }, [allItems, isClient]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {expiringItems.length > 0 && (
+          {isClient && expiringItems.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {expiringItems.length}
             </span>
@@ -53,7 +54,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
             </p>
           </div>
           <Separator />
-          {expiringItems.length > 0 ? (
+          {isClient && expiringItems.length > 0 ? (
             <div className="grid gap-3 max-h-72 overflow-y-auto">
               {expiringItems.map((item) => (
                 <div key={item.id} className="grid grid-cols-[25px_1fr] items-start gap-3">
@@ -72,7 +73,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
               ))}
             </div>
           ) : (
-             <p className="text-sm text-muted-foreground text-center py-4">{today ? "No expiry alerts. Good job!" : "Loading alerts..."}</p>
+             <p className="text-sm text-muted-foreground text-center py-4">{isClient ? "No expiry alerts. Good job!" : "Loading alerts..."}</p>
           )}
         </div>
       </PopoverContent>

@@ -20,19 +20,20 @@ type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
 export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [today, setToday] = useState<Date | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setToday(new Date());
+    setIsClient(true);
   }, []);
 
   const itemsWithStatus: ItemWithStatus[] = useMemo(() => {
-    if (!today) return [];
+    if (!isClient) return [];
+    const now = new Date();
     return items.map(item => ({
       ...item,
-      status: getExpiryStatus(item.expiryDate, today)
+      status: getExpiryStatus(item.expiryDate, now)
     }));
-  }, [items, today]);
+  }, [items, isClient]);
 
   const filteredItems = itemsWithStatus.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -59,7 +60,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.length > 0 ? (
+            {isClient && filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 return (
                   <TableRow key={item.id}>
@@ -87,7 +88,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             ) : (
                <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  {today ? 'No results found.' : 'Loading inventory...'}
+                  {isClient ? 'No results found.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
             )}
