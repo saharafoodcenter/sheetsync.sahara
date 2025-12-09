@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition, useActionState } from "react";
-import { Barcode, Loader2 } from "lucide-react";
-import { useForm, Controller } from "react-hook-form";
+import { Barcode, CalendarIcon, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
 
 import { addItem, findProductByBarcode } from "@/app/actions/inventory";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { DatePicker } from "../ui/date-picker";
 import { BarcodeScanner } from "./barcode-scanner";
 import type { BarcodeProduct } from "@/types";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
+import { cn } from "@/lib/utils";
+
 
 const formSchema = z.object({
   barcode: z.string().optional(),
@@ -35,6 +39,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const [isFinding, startFinding] = useTransition();
   const [barcodeValue, setBarcodeValue] = useState("");
   const [foundProduct, setFoundProduct] = useState<BarcodeProduct | null>(null);
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>();
 
   const [formState, formAction] = useActionState(addItem, {
     message: "",
@@ -52,7 +57,14 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     setBarcodeValue("");
     setScannerVisible(false);
     setFoundProduct(null);
+    setExpiryDate(undefined);
   }
+  
+  useEffect(() => {
+    if(expiryDate) {
+        form.setValue("expiryDate", expiryDate, { shouldValidate: true });
+    }
+  }, [expiryDate, form]);
 
   useEffect(() => {
     // Only close the dialog on SUCCESS
@@ -154,17 +166,29 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry Date</Label>
-                   <Controller
-                      control={form.control}
-                      name="expiryDate"
-                      render={({ field }) => (
-                          <DatePicker
-                              value={field.value}
-                              onChange={field.onChange}
-                              disabled={(date) => date < today}
-                          />
-                      )}
-                  />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !expiryDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={expiryDate}
+                          onSelect={setExpiryDate}
+                          disabled={(date) => date < today}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   {form.formState.errors.expiryDate && <p className="text-sm text-destructive">{form.formState.errors.expiryDate.message}</p>}
                    {formState.errors?.expiryDate && <p className="text-sm text-destructive">{formState.errors.expiryDate[0]}</p>}
                 </div>
