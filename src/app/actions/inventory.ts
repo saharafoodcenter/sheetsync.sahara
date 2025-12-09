@@ -36,6 +36,7 @@ export async function addItem(prevState: any, formData: FormData) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Failed to add item.',
+      success: false,
     };
   }
   
@@ -45,6 +46,7 @@ export async function addItem(prevState: any, formData: FormData) {
     return {
         errors: { expiryDate: ["Expiry date cannot be in the past."] },
         message: 'Failed to add item.',
+        success: false,
     }
   }
 

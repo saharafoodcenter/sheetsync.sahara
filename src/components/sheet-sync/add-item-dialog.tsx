@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, useActionState } from "react";
-import { Barcode, Loader2, Search } from "lucide-react";
+import { Barcode, Loader2 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,7 +24,7 @@ import { BarcodeScanner } from "./barcode-scanner";
 import type { BarcodeProduct } from "@/types";
 
 const formSchema = z.object({
-  barcode: z.string().min(1, "Please enter a barcode."),
+  barcode: z.string().optional(),
   name: z.string().min(1, "Item name is required."),
   expiryDate: z.date({ required_error: "Expiry date is required." }),
 });
@@ -33,6 +33,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const { toast } = useToast();
   const [isScannerVisible, setScannerVisible] = useState(false);
   const [isFinding, startFinding] = useTransition();
+  const [barcodeValue, setBarcodeValue] = useState("");
   const [foundProduct, setFoundProduct] = useState<BarcodeProduct | null>(null);
 
   const [formState, formAction] = useActionState(addItem, {
@@ -43,35 +44,36 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { barcode: "", name: "", expiryDate: undefined },
+    defaultValues: { name: "", expiryDate: undefined },
   });
 
   const resetDialog = () => {
     form.reset();
+    setBarcodeValue("");
     setScannerVisible(false);
     setFoundProduct(null);
   }
 
   useEffect(() => {
+    // Only close the dialog on SUCCESS
     if (formState.success) {
       toast({ title: "Success", description: "Item added to inventory." });
       resetDialog();
       onOpenChange(false);
     } else if (formState.message && formState.errors && Object.keys(formState.errors).length > 0) {
-       // Display errors via form message, not toast
+       // Errors are now handled inline, so we don't need to show a toast here.
+       // This also prevents the dialog from closing on error.
     }
-  }, [formState, onOpenChange, form, toast]);
+  }, [formState, onOpenChange]);
 
   const handleBarcodeLookup = () => {
-    const barcode = form.getValues("barcode");
-    if (!barcode) {
-        form.setError("barcode", { message: "Please enter or scan a barcode first." });
+    if (!barcodeValue) {
+        toast({ variant: 'destructive', title: "Error", description: "Please enter or scan a barcode first." });
         return;
     }
-    form.clearErrors("barcode");
 
     startFinding(async () => {
-      const result = await findProductByBarcode(barcode);
+      const result = await findProductByBarcode(barcodeValue);
       if (result.success && result.product) {
         form.setValue("name", result.product.name, { shouldValidate: true });
         setFoundProduct(result.product);
@@ -84,7 +86,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   }
 
   const handleScanSuccess = (scannedBarcode: string) => {
-    form.setValue("barcode", scannedBarcode, { shouldValidate: true });
+    setBarcodeValue(scannedBarcode);
     setScannerVisible(false);
     toast({ title: "Scan Successful", description: `Barcode captured. Click lookup to continue.` });
   }
@@ -124,21 +126,20 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
              <div className="space-y-2">
                 <Label htmlFor="barcode">Barcode</Label>
                 <div className="flex gap-2 relative">
-                    <Input id="barcode" {...form.register("barcode")} className="pr-10" />
+                    <Input id="barcode" value={barcodeValue} onChange={(e) => setBarcodeValue(e.target.value)} className="pr-10" />
                     <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setScannerVisible(v => !v)}>
                         <Barcode className="h-4 w-4"/>
                         <span className="sr-only">Scan Barcode</span>
                     </Button>
                 </div>
-                 {form.formState.errors.barcode && <p className="text-sm text-destructive">{form.formState.errors.barcode.message}</p>}
                  <Button type="button" className="w-full gap-2" onClick={handleBarcodeLookup} disabled={isFinding}>
-                    {isFinding ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
-                    <span>Look up barcode</span>
+                    {isFinding && <Loader2 className="h-4 w-4 animate-spin"/>}
+                    Look up barcode
                 </Button>
             </div>
 
             {isScannerVisible && (
-                 <BarcodeScanner 
+                 <BarcodeScanner
                     onScan={handleScanSuccess}
                 />
             )}
@@ -147,7 +148,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
               <>
                 <div className="space-y-2">
                   <Label htmlFor="name">Item Name</Label>
-                  <Input id="name" name="name" {...form.register("name")} readOnly className="bg-muted"/>
+                  <Input id="name" {...form.register("name")} readOnly className="bg-muted"/>
                   {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
                   {formState.errors?.name && <p className="text-sm text-destructive">{formState.errors.name[0]}</p>}
                 </div>
