@@ -64,7 +64,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
        // Errors are now handled inline, so we don't need to show a toast here.
        // This also prevents the dialog from closing on error.
     }
-  }, [formState, onOpenChange]);
+  }, [formState, onOpenChange, toast]);
 
   const handleBarcodeLookup = () => {
     if (!barcodeValue) {
@@ -119,7 +119,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>
-              {foundProduct ? "Confirm the details and add the expiry date." : "Scan a barcode or enter it manually to begin."}
+              Scan a barcode or enter it manually to begin.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
