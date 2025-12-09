@@ -77,7 +77,9 @@ export function ItemCard({ item }: { item: InventoryItem }) {
 
   useEffect(() => {
     // getExpiryStatus is now only called on the client after hydration
-    setStatus(getExpiryStatus(item.expiryDate, new Date()));
+    if (typeof window !== 'undefined') {
+      setStatus(getExpiryStatus(item.expiryDate, new Date()));
+    }
   }, [item.expiryDate]);
 
   if (!status) {
@@ -88,9 +90,11 @@ export function ItemCard({ item }: { item: InventoryItem }) {
                     <CardTitle className="text-lg leading-tight">{item.name}</CardTitle>
                     <DeleteAction id={item.id} name={item.name} />
                 </div>
-                <CardDescription className="flex items-center gap-1.5 text-xs">
-                    <Layers className="h-3 w-3" /> Batch: {item.batch}
-                </CardDescription>
+                 {item.batch && item.batch !== 'N/A' && (
+                    <CardDescription className="flex items-center gap-1.5 text-xs">
+                        <Layers className="h-3 w-3" /> Batch: {item.batch}
+                    </CardDescription>
+                )}
             </CardHeader>
             <CardContent className="flex-grow animate-pulse">
                 <div className="h-8 w-full rounded-md bg-muted" />
@@ -115,9 +119,11 @@ export function ItemCard({ item }: { item: InventoryItem }) {
           <CardTitle className="text-lg leading-tight">{item.name}</CardTitle>
           <DeleteAction id={item.id} name={item.name} />
         </div>
-        <CardDescription className="flex items-center gap-1.5 text-xs">
-            <Layers className="h-3 w-3" /> Batch: {item.batch}
-        </CardDescription>
+         {item.batch && item.batch !== 'N/A' && (
+            <CardDescription className="flex items-center gap-1.5 text-xs">
+                <Layers className="h-3 w-3" /> Batch: {item.batch}
+            </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="flex-grow">
         <Badge className={cn(
