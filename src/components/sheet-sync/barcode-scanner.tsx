@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import { NotFoundException } from '@zxing/library';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -14,12 +14,24 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
+        // Check for permission without prompting first
+        const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        if (permission.state === 'granted') {
+           setHasCameraPermission(true);
+        } else if (permission.state === 'prompt') {
+           setHasCameraPermission(null); // Will prompt on getUserMedia
+        } else {
+           setHasCameraPermission(false);
+        }
+        
+        // This will prompt if not granted
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
 
@@ -39,41 +51,59 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
 
     if (isScanning) {
         getCameraPermission();
+    } else {
+        // Stop camera when not scanning
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+        controlsRef.current?.stop();
+        controlsRef.current = null;
     }
   }, [isScanning, toast]);
 
 
   useEffect(() => {
-    if (!isScanning || !hasCameraPermission || !videoRef.current) return;
+    if (!isScanning || !hasCameraPermission || !videoRef.current) {
+        return;
+    }
 
     const codeReader = new BrowserMultiFormatReader();
+    const videoElement = videoRef.current;
     
-    // Ensure video element is ready before decoding
-    const startScan = () => {
-        if(videoRef.current) {
-            codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
+    const startScan = async () => {
+        if (!videoElement) return;
+        try {
+           const controls = await codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
                 if (result) {
-                onScan(result.getText());
+                    onScan(result.getText());
                 }
                 if (err && !(err instanceof NotFoundException)) {
-                console.error('Barcode scan error:', err);
+                    console.error('Barcode scan error:', err);
                 }
-            }).catch(err => console.error("Decode error", err));
+            });
+            controlsRef.current = controls;
+        } catch(err) {
+            console.error("Decode error", err)
         }
     }
 
-    // Delay start of scan to ensure video is playing
-    const videoElement = videoRef.current;
-    videoElement.oncanplay = () => {
-        startScan();
-    }
     if (videoElement.readyState >= 3) { // HAVE_FUTURE_DATA
         startScan();
+    } else {
+        videoElement.oncanplay = () => {
+            startScan();
+        }
     }
 
-
     return () => {
-      codeReader.reset();
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
     };
   }, [isScanning, onScan, hasCameraPermission]);
 
