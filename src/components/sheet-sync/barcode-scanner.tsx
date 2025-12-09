@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import type { IScannerControls } from '@zxing/browser';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,8 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
           if (result) {
             onScan(result.getText());
           }
-          if (err && !(err instanceof NotFoundException)) {
+          // The error for "no barcode found" has the name "NotFoundException"
+          if (err && err.name !== 'NotFoundException') {
             console.error('Barcode scan error:', err);
           }
         });
@@ -44,11 +45,13 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
       } catch (error) {
         console.error('Error accessing camera or starting scanner:', error);
         setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use the scanner.',
-        });
+        if ((error as Error).name === 'NotAllowedError') {
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use the scanner.',
+          });
+        }
       }
     };
 
