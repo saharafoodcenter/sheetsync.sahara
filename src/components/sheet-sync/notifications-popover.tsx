@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Bell, CalendarClock, TriangleAlert } from "lucide-react";
@@ -33,12 +34,14 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
       .sort((a,b) => a.status.days - b.status.days);
   }, [allItems, isClient]);
 
+  const showBadge = isClient && expiringItems.length > 0;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {isClient && expiringItems.length > 0 && (
+          {showBadge && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {expiringItems.length}
             </span>
