@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
-import { NotFoundException } from '@zxing/library';
+import { BrowserMultiFormatReader, type IScannerControls, NotFoundException } from '@zxing/browser';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CameraOff } from 'lucide-react';
@@ -21,17 +20,15 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
-        // Check for permission without prompting first
         const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
         if (permission.state === 'granted') {
            setHasCameraPermission(true);
         } else if (permission.state === 'prompt') {
-           setHasCameraPermission(null); // Will prompt on getUserMedia
+           setHasCameraPermission(null);
         } else {
            setHasCameraPermission(false);
         }
         
-        // This will prompt if not granted
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
 
@@ -52,14 +49,15 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
     if (isScanning) {
         getCameraPermission();
     } else {
-        // Stop camera when not scanning
         if (videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
         }
-        controlsRef.current?.stop();
-        controlsRef.current = null;
+        if (controlsRef.current) {
+            controlsRef.current.stop();
+            controlsRef.current = null;
+        }
     }
   }, [isScanning, toast]);
 
@@ -85,11 +83,15 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
             });
             controlsRef.current = controls;
         } catch(err) {
-            console.error("Decode error", err)
+            if (err instanceof Error) {
+                console.error("Failed to start scanner:", err.message);
+            } else {
+                console.error("An unknown error occurred while starting the scanner.");
+            }
         }
     }
 
-    if (videoElement.readyState >= 3) { // HAVE_FUTURE_DATA
+    if (videoElement.readyState >= videoElement.HAVE_FUTURE_DATA) {
         startScan();
     } else {
         videoElement.oncanplay = () => {
@@ -98,11 +100,14 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
     }
 
     return () => {
-      controlsRef.current?.stop();
-      controlsRef.current = null;
+      if (controlsRef.current) {
+        controlsRef.current.stop();
+        controlsRef.current = null;
+      }
       if (videoElement && videoElement.srcObject) {
         const stream = videoElement.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
+        videoElement.srcObject = null;
       }
     };
   }, [isScanning, onScan, hasCameraPermission]);
