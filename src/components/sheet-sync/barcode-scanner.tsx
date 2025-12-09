@@ -22,7 +22,7 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
     let controls: IScannerControls;
 
     const startScan = async () => {
-      if (!videoRef.current) return;
+      if (!videoRef.current || hasCameraPermission === false) return;
       try {
         // Ask for permission and get stream
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -72,7 +72,7 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
     return () => {
       stopScan();
     };
-  }, [isScanning, onScan, toast]);
+  }, [isScanning, onScan, toast, hasCameraPermission]);
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted">
