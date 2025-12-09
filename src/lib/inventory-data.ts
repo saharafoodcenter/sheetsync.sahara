@@ -11,7 +11,7 @@ export async function getInventoryData(): Promise<InventoryItem[]> {
     return getInventoryFromSheet();
 };
 
-export async function addInventoryItem(item: Omit<InventoryItem, 'id' | 'batch' | 'addedDate'>): Promise<InventoryItem> {
+export async function addInventoryItem(item: Omit<InventoryItem, 'id' | 'addedDate' | 'batch'> & { batch?: string }): Promise<InventoryItem> {
     return addInventoryItemToSheet(item);
 };
 

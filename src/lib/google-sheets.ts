@@ -70,11 +70,11 @@ export async function getBarcodesFromSheet(): Promise<BarcodeProduct[]> {
     }
 }
 
-export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | 'batch' | 'addedDate'>): Promise<InventoryItem> {
+export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | 'addedDate' | 'batch'> & { batch?: string }): Promise<InventoryItem> {
     const newItem: InventoryItem = {
         ...item,
         id: crypto.randomUUID(),
-        batch: `B${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`,
+        batch: item.batch || `B${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`,
         addedDate: new Date(),
     };
 

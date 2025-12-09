@@ -15,6 +15,7 @@ const itemSchema = z.object({
   expiryDate: z.coerce.date({
     required_error: 'Expiry date is required.',
   }),
+  batch: z.string().optional(),
 });
 
 export async function getInventory(): Promise<InventoryItem[]> {
@@ -30,6 +31,7 @@ export async function addItem(prevState: any, formData: FormData) {
   const validatedFields = itemSchema.safeParse({
     name: formData.get('name'),
     expiryDate: formData.get('expiryDate'),
+    batch: formData.get('batch'),
   });
 
   if (!validatedFields.success) {

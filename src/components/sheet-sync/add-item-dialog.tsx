@@ -2,9 +2,6 @@
 
 import { useEffect, useState, useTransition, useActionState } from "react";
 import { Barcode, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { format } from "date-fns";
 
 import { addItem, findProductByBarcode } from "@/app/actions/inventory";
@@ -23,12 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./barcode-scanner";
 import type { BarcodeProduct } from "@/types";
 
-const formSchema = z.object({
-  barcode: z.string().optional(),
-  name: z.string().min(1, "Item name is required."),
-  expiryDate: z.string().min(1, "Expiry date is required."),
-});
-
 export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (isOpen: boolean) => void }) {
   const { toast } = useToast();
   const [isScannerVisible, setScannerVisible] = useState(false);
@@ -42,40 +33,19 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     success: false,
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: "", expiryDate: "" },
-  });
-
   const resetDialog = () => {
-    form.reset();
     setBarcodeValue("");
     setScannerVisible(false);
     setFoundProduct(null);
   }
 
   useEffect(() => {
-    // Only close the dialog on SUCCESS
     if (formState.success) {
       toast({ title: "Success", description: "Item added to inventory." });
       resetDialog();
       onOpenChange(false);
-    } else if (formState.message && formState.errors && Object.keys(formState.errors).length > 0) {
-       // Errors are now handled inline, so we don't need to show a toast here.
     }
-  }, [formState, onOpenChange, toast]);
-
-  useEffect(() => {
-    if (formState?.errors) {
-        form.setError("root", { type: "custom", message: formState.message });
-        if (formState.errors.name) {
-            form.setError("name", { type: "custom", message: formState.errors.name[0] });
-        }
-        if (formState.errors.expiryDate) {
-            form.setError("expiryDate", { type: "custom", message: formState.errors.expiryDate[0] });
-        }
-    }
-  }, [formState, form]);
+  }, [formState.success, onOpenChange, toast]);
 
   const handleBarcodeLookup = () => {
     if (!barcodeValue) {
@@ -86,7 +56,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     startFinding(async () => {
       const result = await findProductByBarcode(barcodeValue);
       if (result.success && result.product) {
-        form.setValue("name", result.product.name, { shouldValidate: true });
         setFoundProduct(result.product);
         toast({ title: "Product Found", description: `Item name set to "${result.product.name}".` });
       } else {
@@ -146,9 +115,10 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
             {foundProduct && (
               <>
+                <input type="hidden" name="name" value={foundProduct.name} />
                 <div className="space-y-2">
-                  <Label htmlFor="name">Item Name</Label>
-                  <Input id="name" name="name" defaultValue={foundProduct.name} readOnly className="bg-muted"/>
+                  <Label>Item Name</Label>
+                  <Input defaultValue={foundProduct.name} readOnly className="bg-muted"/>
                   {formState.errors?.name && <p className="text-sm text-destructive">{formState.errors.name[0]}</p>}
                 </div>
                 <div className="space-y-2">
@@ -161,6 +131,16 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                     />
                   {formState.errors?.expiryDate && <p className="text-sm text-destructive">{formState.errors.expiryDate[0]}</p>}
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="batch">Batch Number (Optional)</Label>
+                  <Input 
+                    id="batch" 
+                    name="batch"
+                    type="text"
+                    placeholder="e.g. B123"
+                  />
+                   {formState.errors?.batch && <p className="text-sm text-destructive">{formState.errors.batch[0]}</p>}
+                </div>
               </>
             )}
           </div>
@@ -168,7 +148,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
           {foundProduct && (
             <DialogFooter>
                 <Button type="submit">
-                Add to Inventory
+                  Add to Inventory
                 </Button>
             </DialogFooter>
            )}
