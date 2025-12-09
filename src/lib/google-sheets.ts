@@ -74,7 +74,7 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
     const newItem: InventoryItem = {
         ...item,
         id: crypto.randomUUID(),
-        batch: item.batch || `B${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`,
+        batch: item.batch || 'N/A',
         addedDate: new Date(),
     };
 
