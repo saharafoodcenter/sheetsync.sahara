@@ -65,6 +65,18 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     }
   }, [formState, onOpenChange, toast]);
 
+  useEffect(() => {
+    if (formState?.errors) {
+        form.setError("root", { type: "custom", message: formState.message });
+        if (formState.errors.name) {
+            form.setError("name", { type: "custom", message: formState.errors.name[0] });
+        }
+        if (formState.errors.expiryDate) {
+            form.setError("expiryDate", { type: "custom", message: formState.errors.expiryDate[0] });
+        }
+    }
+  }, [formState, form]);
+
   const handleBarcodeLookup = () => {
     if (!barcodeValue) {
         toast({ variant: 'destructive', title: "Error", description: "Please enter or scan a barcode first." });
@@ -100,13 +112,9 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
         onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[425px]">
-        <form action={formAction}
-          onSubmit={form.handleSubmit(data => {
-            const formData = new FormData();
-            formData.set('name', data.name);
-            formData.set('expiryDate', data.expiryDate);
-            formAction(formData);
-          })}
+        <form
+          action={formAction}
+          className="space-y-4"
         >
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
@@ -140,16 +148,16 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
               <>
                 <div className="space-y-2">
                   <Label htmlFor="name">Item Name</Label>
-                  <Input id="name" {...form.register("name")} readOnly className="bg-muted"/>
+                  <Input id="name" name="name" defaultValue={foundProduct.name} readOnly className="bg-muted"/>
                   {formState.errors?.name && <p className="text-sm text-destructive">{formState.errors.name[0]}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry Date</Label>
                    <Input 
                     id="expiryDate" 
+                    name="expiryDate"
                     type="date"
                     min={today}
-                    {...form.register("expiryDate")}
                     />
                   {formState.errors?.expiryDate && <p className="text-sm text-destructive">{formState.errors.expiryDate[0]}</p>}
                 </div>
@@ -159,8 +167,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
           {foundProduct && (
             <DialogFooter>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit">
                 Add to Inventory
                 </Button>
             </DialogFooter>
