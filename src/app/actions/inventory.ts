@@ -18,7 +18,7 @@ const itemSchema = z.object({
 });
 
 export async function getInventory(): Promise<InventoryItem[]> {
-  const items: InventoryItem[] = getInventoryData().map(item => ({
+  const items: InventoryItem[] = (await getInventoryData()).map(item => ({
     ...item,
     expiryDate: new Date(item.expiryDate),
     addedDate: new Date(item.addedDate)
@@ -50,33 +50,38 @@ export async function addItem(prevState: any, formData: FormData) {
 
 
   try {
-    addInventoryItem(validatedFields.data);
+    await addInventoryItem(validatedFields.data);
     revalidatePath('/');
+    revalidatePath('/inventory');
     return { message: 'Item added successfully.', errors: {}, success: true };
   } catch (e) {
-    return { message: 'Database Error: Failed to add item.', errors: {}, success: false };
+    const message = e instanceof Error ? e.message : 'Database Error: Failed to add item.';
+    return { message, errors: {}, success: false };
   }
 }
 
 export async function deleteItem(id: string) {
   try {
     if (!id) throw new Error("ID is required");
-    deleteInventoryItem(id);
+    await deleteInventoryItem(id);
     revalidatePath('/');
+    revalidatePath('/inventory');
     return { message: 'Item deleted.' };
   } catch (e) {
-    return { message: `Database Error: Failed to delete item. ${e}` };
+     const message = e instanceof Error ? e.message : 'Database Error: Failed to delete item.';
+    return { message };
   }
 }
 
 export async function findProductByBarcode(barcode: string) {
     try {
-        const product = findProduct(barcode);
+        const product = await findProduct(barcode);
         if (product) {
             return { success: true, product };
         }
         return { success: false, message: 'Product not found.' };
     } catch (e) {
-        return { success: false, message: 'An error occurred.' };
+       const message = e instanceof Error ? e.message : 'An error occurred.';
+        return { success: false, message };
     }
 }
