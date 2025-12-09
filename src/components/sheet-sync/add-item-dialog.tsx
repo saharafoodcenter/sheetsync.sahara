@@ -159,7 +159,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                       render={({ field }) => (
                           <DatePicker
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={(date) => field.onChange(date)}
                               disabled={(date) => date < today}
                           />
                       )}
