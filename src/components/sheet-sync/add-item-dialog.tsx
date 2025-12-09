@@ -125,17 +125,16 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                 <Label htmlFor="barcode">Barcode</Label>
                 <div className="flex gap-2 relative">
                     <Input id="barcode" {...form.register("barcode")} className="pr-10" />
-                     <Button type="button" variant="ghost" size="icon" className="absolute right-10 top-0 h-full" onClick={handleBarcodeLookup} disabled={isFinding}>
-                        {isFinding ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
-                        <span className="sr-only">Look up barcode</span>
-                    </Button>
-                    <Button type="button" variant="outline" size="icon" onClick={() => setScannerVisible(v => !v)}>
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setScannerVisible(v => !v)}>
                         <Barcode className="h-4 w-4"/>
                         <span className="sr-only">Scan Barcode</span>
                     </Button>
                 </div>
-                 {isFinding && <p className="text-sm text-muted-foreground">Looking up product...</p>}
                  {form.formState.errors.barcode && <p className="text-sm text-destructive">{form.formState.errors.barcode.message}</p>}
+                 <Button type="button" className="w-full" onClick={handleBarcodeLookup} disabled={isFinding}>
+                    {isFinding ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
+                    <span>Look up barcode</span>
+                </Button>
             </div>
 
             {isScannerVisible && (
