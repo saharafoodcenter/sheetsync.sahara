@@ -1,12 +1,20 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
 import type { InventoryItem } from '@/types';
-import { ItemCard } from './item-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PackageOpen, Package, TriangleAlert, ShieldCheck } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { getExpiryStatus } from '@/lib/utils';
+import { PackageOpen, Package, TriangleAlert, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
+import { getExpiryStatus, type ExpiryStatus } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import Link from 'next/link';
+
+type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
 type SortOption = 'expiry-asc' | 'expiry-desc' | 'name-asc' | 'name-desc' | 'added-desc';
 
@@ -27,7 +35,6 @@ function StatCard({ title, value, icon, description }: { title: string, value: s
 
 export function InventoryDashboard({ initialItems }: { initialItems: InventoryItem[] }) {
   const [items] = useState<InventoryItem[]>(initialItems);
-  const [sortOption, setSortOption] = useState<SortOption>('expiry-asc');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -44,23 +51,14 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
     }
   }, [items, isClient]);
 
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      switch (sortOption) {
-        case 'expiry-desc':
-          return b.expiryDate.getTime() - a.expiryDate.getTime();
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        case 'added-desc':
-          return b.addedDate.getTime() - a.addedDate.getTime();
-        case 'expiry-asc':
-        default:
-          return a.expiryDate.getTime() - b.expiryDate.getTime();
-      }
-    });
-  }, [items, sortOption]);
+  const soonestExpiringItems = useMemo(() => {
+    if (!isClient) return [];
+    const now = new Date();
+    return [...items]
+      .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
+      .sort((a, b) => a.status.days - b.status.days)
+      .slice(0, 5);
+  }, [items, isClient]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -75,42 +73,53 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
         <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-muted-foreground" />} description="Items that have already expired" />
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold tracking-tight">Inventory Items</h2>
-          <div className="w-[180px]">
-            <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expiry-asc">Expiry Date (Soonest)</SelectItem>
-                <SelectItem value="expiry-desc">Expiry Date (Latest)</SelectItem>
-                <SelectItem value="added-desc">Date Added (Newest)</SelectItem>
-                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        {sortedItems.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {sortedItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <Card className="sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-5">
-              <CardHeader>
-                  <CardTitle>No Items in Inventory</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+      <Card>
+          <CardHeader>
+              <CardTitle>Expiring Soon</CardTitle>
+              <p className="text-sm text-muted-foreground">These items are nearing their expiry date.</p>
+          </CardHeader>
+          <CardContent>
+            {soonestExpiringItems.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Expires</TableHead>
+                            <TableHead className="text-right">Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {soonestExpiringItems.map((item) => (
+                             <TableRow key={item.id}>
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
+                                <TableCell className="text-right">
+                                     <Badge className={cn(item.status.color, "text-xs")}>
+                                        {item.status.label}
+                                    </Badge>
+                                </TableCell>
+                             </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            ) : (
+                <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
                   <PackageOpen className="h-16 w-16 text-muted-foreground" />
-                  <p className="text-muted-foreground">Your inventory is empty. Click "Add Item" to get started.</p>
-              </CardContent>
-          </Card>
-        )}
-      </div>
+                  <p className="text-muted-foreground">{isClient ? "No items are expiring soon. Great job!" : "Loading..."}</p>
+              </div>
+            )}
+          </CardContent>
+           {items.length > 0 && (
+            <CardFooter className="justify-end">
+                <Button asChild variant="ghost" size="sm">
+                    <Link href="/inventory">
+                        View All
+                        <ArrowRight className="ml-2 h-4 w-4"/>
+                    </Link>
+                </Button>
+            </CardFooter>
+           )}
+      </Card>
     </div>
   );
 }
