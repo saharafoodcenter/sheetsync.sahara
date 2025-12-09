@@ -107,21 +107,20 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
 
 export async function deleteInventoryItemFromSheet(id: string): Promise<{ success: boolean; id: string; }> {
      try {
-        // First, get all the data to find the row number
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A2:A`,
+            range: `${INVENTORY_SHEET_NAME}!A:A`, // Read all of column A to find the row index
         });
 
         const rows = response.data.values;
         if (!rows) {
-            throw new Error(`Item with id ${id} not found.`);
+            throw new Error(`Sheet is empty or item with id ${id} not found.`);
         }
         
         const rowIndex = rows.findIndex(row => row[0] === id);
         
         if (rowIndex === -1) {
-            throw new Error(`Item with id ${id} not found.`);
+             throw new Error(`Item with id ${id} not found in the sheet.`);
         }
 
         const sheetResponse = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
@@ -132,8 +131,8 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
              throw new Error(`Could not find sheet with name ${INVENTORY_SHEET_NAME}`);
         }
 
-        // The row index from the API is 0-based, and we started from A2, so we need to add 2 to get the actual sheet row number.
-        const rowToDelete = rowIndex + 2;
+        // rowIndex is 0-based. We use it directly for the batchUpdate request.
+        const rowToDelete = rowIndex;
 
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
@@ -143,8 +142,8 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
                         range: {
                             sheetId: sheetGid,
                             dimension: 'ROWS',
-                            startIndex: rowToDelete - 1, // startIndex is 0-based
-                            endIndex: rowToDelete,
+                            startIndex: rowToDelete,
+                            endIndex: rowToDelete + 1,
                         }
                     }
                 }]

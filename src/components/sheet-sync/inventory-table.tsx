@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useTransition } from "react";
 import { format } from "date-fns";
 import {
   Table,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,29 +36,32 @@ type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
 function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id: string) => void }) {
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
 
-  const handleDelete = async () => {
-    const result = await deleteItem(item.id);
-    if (result.message.includes("Error")) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: result.message,
-      });
-    } else {
-       toast({
-        title: "Success",
-        description: `"${item.name}" has been deleted.`,
-      });
-      onDeleted(item.id);
-    }
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteItem(item.id);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `"${item.name}" has been deleted.`,
+        });
+        onDeleted(item.id);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.message,
+        });
+      }
+    });
   };
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-          <Trash2 className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isPending}>
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> :<Trash2 className="h-4 w-4" />}
           <span className="sr-only">Delete item</span>
         </Button>
       </AlertDialogTrigger>
@@ -71,7 +74,10 @@ function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Delete
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

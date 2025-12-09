@@ -72,10 +72,10 @@ export async function deleteItem(id: string) {
     await deleteInventoryItem(id);
     revalidatePath('/');
     revalidatePath('/inventory');
-    return { message: 'Item deleted.' };
+    return { message: 'Item deleted.', success: true };
   } catch (e) {
      const message = e instanceof Error ? e.message : 'Database Error: Failed to delete item.';
-    return { message };
+    return { message, success: false };
   }
 }
 
