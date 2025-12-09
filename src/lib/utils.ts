@@ -6,13 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getExpiryStatus(expiryDate: Date): {
+export type ExpiryStatus = {
   status: 'expired' | 'expiring' | 'fresh';
   label: string;
   color: string;
   days: number;
-} {
-  const today = new Date();
+};
+
+export function getExpiryStatus(expiryDate: Date, comparisonDate: Date): ExpiryStatus {
+  const today = new Date(comparisonDate);
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(expiryDate);
   expiry.setHours(0,0,0,0);
@@ -22,7 +24,7 @@ export function getExpiryStatus(expiryDate: Date): {
   if (daysUntilExpiry < 0) {
     return {
       status: 'expired',
-      label: `Expired ${formatDistanceToNow(expiry, { addSuffix: true })}`,
+      label: `Expired ${formatDistanceToNow(expiry, { addSuffix: true, now: today })}`,
       color: 'bg-destructive/80 text-destructive-foreground',
       days: daysUntilExpiry,
     };

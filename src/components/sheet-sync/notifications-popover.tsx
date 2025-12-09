@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, CalendarClock, TriangleAlert } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format } from 'date-fns';
 
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,25 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import type { InventoryItem } from "@/types";
-import { getExpiryStatus } from "@/lib/utils";
+import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
+type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
+
 export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }) {
+    const [today, setToday] = useState<Date | null>(null);
+
+    useEffect(() => {
+        setToday(new Date());
+    }, []);
+
   const expiringItems = useMemo(() => {
+    if (!today) return [];
     return allItems
-      .map(item => ({...item, status: getExpiryStatus(item.expiryDate)}))
+      .map(item => ({...item, status: getExpiryStatus(item.expiryDate, today)}))
       .filter(item => item.status.status === 'expiring' || item.status.status === 'expired')
       .sort((a,b) => a.status.days - b.status.days);
-  }, [allItems]);
+  }, [allItems, today]);
 
   return (
     <Popover>
@@ -63,7 +72,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No expiry alerts. Good job!</p>
+             <p className="text-sm text-muted-foreground text-center py-4">{today ? "No expiry alerts. Good job!" : "Loading alerts..."}</p>
           )}
         </div>
       </PopoverContent>

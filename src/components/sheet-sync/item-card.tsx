@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import type { InventoryItem } from "@/types";
 import { format } from "date-fns";
 import { Calendar, Layers, Trash2 } from "lucide-react";
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getExpiryStatus } from "@/lib/utils";
+import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -72,7 +73,35 @@ function DeleteAction({ id, name }: { id: string, name: string }) {
 }
 
 export function ItemCard({ item }: { item: InventoryItem }) {
-  const status = getExpiryStatus(item.expiryDate);
+  const [status, setStatus] = useState<ExpiryStatus | null>(null);
+
+  useEffect(() => {
+    setStatus(getExpiryStatus(item.expiryDate, new Date()));
+  }, [item.expiryDate]);
+
+  if (!status) {
+    return (
+        <Card className="flex flex-col transition-shadow hover:shadow-lg">
+             <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg leading-tight">{item.name}</CardTitle>
+                    <DeleteAction id={item.id} name={item.name} />
+                </div>
+                <CardDescription className="flex items-center gap-1.5 text-xs">
+                    <Layers className="h-3 w-3" /> Batch: {item.batch}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow animate-pulse">
+                <div className="h-8 w-full rounded-md bg-muted" />
+            </CardContent>
+            <CardFooter>
+                 <p className="text-xs text-muted-foreground">
+                    Added on {format(item.addedDate, "MMM d, yyyy")}
+                </p>
+            </CardFooter>
+        </Card>
+    );
+  }
 
   return (
     <Card className={cn(

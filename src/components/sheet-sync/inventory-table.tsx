@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import {
   Table,
@@ -11,16 +11,30 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getExpiryStatus } from "@/lib/utils";
+import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 import { cn } from "@/lib/utils";
 
+type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
+
 export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [today, setToday] = useState<Date | null>(null);
 
-  const filteredItems = items.filter((item) =>
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
+
+  const itemsWithStatus: ItemWithStatus[] = useMemo(() => {
+    if (!today) return [];
+    return items.map(item => ({
+      ...item,
+      status: getExpiryStatus(item.expiryDate, today)
+    }));
+  }, [items, today]);
+
+  const filteredItems = itemsWithStatus.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -39,6 +53,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
               <TableHead>Item Name</TableHead>
               <TableHead>Batch</TableHead>
               <TableHead>Added Date</TableHead>
+
               <TableHead>Expiry Date</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -46,7 +61,6 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           <TableBody>
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
-                const status = getExpiryStatus(item.expiryDate);
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
@@ -60,20 +74,20 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                     <TableCell>
                       <Badge
                         className={cn(
-                          status.color,
+                          item.status.color,
                           "text-xs"
                         )}
                       >
-                        {status.label}
+                        {item.status.label}
                       </Badge>
                     </TableCell>
                   </TableRow>
                 );
               })
             ) : (
-              <TableRow>
+               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No results found.
+                  {today ? 'No results found.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
             )}
