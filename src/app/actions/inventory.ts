@@ -12,6 +12,7 @@ import { InventoryItem } from '@/types';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required.'),
+  barcode: z.string().min(1, 'Barcode is required.'),
   expiryDate: z.coerce.date({
     required_error: 'Expiry date is required.',
   }),
@@ -30,6 +31,7 @@ export async function getInventory(): Promise<InventoryItem[]> {
 export async function addItem(prevState: any, formData: FormData) {
   const validatedFields = itemSchema.safeParse({
     name: formData.get('name'),
+    barcode: formData.get('barcode'),
     expiryDate: formData.get('expiryDate'),
     batch: formData.get('batch'),
   });

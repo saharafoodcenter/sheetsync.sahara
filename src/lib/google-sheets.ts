@@ -27,6 +27,7 @@ function sheetRowToInventoryItem(row: any[]): InventoryItem | null {
         expiryDate: new Date(row[2]),
         addedDate: new Date(row[3]),
         batch: row[4],
+        barcode: row[5],
     };
 }
 
@@ -35,7 +36,7 @@ export async function getInventoryFromSheet(): Promise<InventoryItem[]> {
     try {
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A2:E`,
+            range: `${INVENTORY_SHEET_NAME}!A2:F`,
         });
 
         const rows = response.data.values;
@@ -84,12 +85,13 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
         newItem.expiryDate.toISOString(),
         newItem.addedDate.toISOString(),
         newItem.batch,
+        newItem.barcode,
     ];
 
     try {
         await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A:E`,
+            range: `${INVENTORY_SHEET_NAME}!A:F`,
             valueInputOption: 'USER_ENTERED',
             insertDataOption: 'INSERT_ROWS',
             requestBody: {

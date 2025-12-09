@@ -144,8 +144,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Item Name</TableHead>
+              <TableHead>Barcode</TableHead>
               <TableHead>Batch</TableHead>
-              <TableHead>Added Date</TableHead>
               <TableHead>Expiry Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[50px] text-right">Action</TableHead>
@@ -162,10 +162,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                     className={cn(isHighlighted && 'bg-primary/20 transition-all duration-1000 ease-out')}
                   >
                     <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>{item.barcode}</TableCell>
                     <TableCell>{item.batch}</TableCell>
-                    <TableCell>
-                      {format(item.addedDate, "MMM d, yyyy")}
-                    </TableCell>
                     <TableCell>
                       {format(item.expiryDate, "MMM d, yyyy")}
                     </TableCell>

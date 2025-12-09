@@ -93,9 +93,9 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
           </DialogHeader>
           <div className="grid gap-4 py-4">
              <div className="space-y-2">
-                <Label htmlFor="barcode">Barcode</Label>
+                <Label htmlFor="barcode-input">Barcode</Label>
                 <div className="flex gap-2 relative">
-                    <Input id="barcode" value={barcodeValue} onChange={(e) => setBarcodeValue(e.target.value)} className="pr-10" />
+                    <Input id="barcode-input" value={barcodeValue} onChange={(e) => setBarcodeValue(e.target.value)} className="pr-10" />
                     <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setScannerVisible(v => !v)}>
                         <Barcode className="h-4 w-4"/>
                         <span className="sr-only">Scan Barcode</span>
@@ -116,6 +116,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
             {foundProduct && (
               <>
                 <input type="hidden" name="name" value={foundProduct.name} />
+                <input type="hidden" name="barcode" value={foundProduct.barcode} />
                 <div className="space-y-2">
                   <Label>Item Name</Label>
                   <Input defaultValue={foundProduct.name} readOnly className="bg-muted"/>
