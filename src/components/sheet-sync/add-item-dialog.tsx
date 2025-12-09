@@ -1,8 +1,10 @@
+
 "use client";
 
 import { useEffect, useState, useTransition, useActionState } from "react";
 import { Barcode, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useFormStatus } from "react-dom";
 
 import { addItem, findProductByBarcode } from "@/app/actions/inventory";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,16 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./barcode-scanner";
 import type { BarcodeProduct } from "@/types";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      Add to Inventory
+    </Button>
+  );
+}
 
 export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (isOpen: boolean) => void }) {
   const { toast } = useToast();
@@ -44,8 +56,10 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       toast({ title: "Success", description: "Item added to inventory." });
       resetDialog();
       onOpenChange(false);
+    } else if (formState.message && !formState.success && formState.errors && Object.keys(formState.errors).length === 0) {
+        toast({ variant: 'destructive', title: "Error", description: formState.message });
     }
-  }, [formState.success, onOpenChange, toast]);
+  }, [formState, onOpenChange, toast]);
 
   const handleBarcodeLookup = () => {
     if (!barcodeValue) {
@@ -95,7 +109,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
              <div className="space-y-2">
                 <Label htmlFor="barcode-input">Barcode</Label>
                 <div className="flex gap-2 relative">
-                    <Input id="barcode-input" value={barcodeValue} onChange={(e) => setBarcodeValue(e.target.value)} className="pr-10" />
+                    <Input id="barcode-input" name="barcode" value={barcodeValue} onChange={(e) => setBarcodeValue(e.target.value)} className="pr-10" />
                     <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setScannerVisible(v => !v)}>
                         <Barcode className="h-4 w-4"/>
                         <span className="sr-only">Scan Barcode</span>
@@ -116,7 +130,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
             {foundProduct && (
               <>
                 <input type="hidden" name="name" value={foundProduct.name} />
-                <input type="hidden" name="barcode" value={foundProduct.barcode} />
                 <div className="space-y-2">
                   <Label>Item Name</Label>
                   <Input defaultValue={foundProduct.name} readOnly className="bg-muted"/>
@@ -148,9 +161,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
           {foundProduct && (
             <DialogFooter>
-                <Button type="submit">
-                  Add to Inventory
-                </Button>
+                <SubmitButton />
             </DialogFooter>
            )}
         </form>

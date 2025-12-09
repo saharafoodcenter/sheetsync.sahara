@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from 'next/cache';
@@ -56,7 +57,10 @@ export async function addItem(prevState: any, formData: FormData) {
 
 
   try {
-    await addInventoryItem(validatedFields.data);
+    await addInventoryItem({
+        ...validatedFields.data,
+        batch: validatedFields.data.batch || 'N/A'
+    });
     revalidatePath('/');
     revalidatePath('/inventory');
     return { message: 'Item added successfully.', errors: {}, success: true };
