@@ -2,29 +2,26 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import type { IScannerControls } from '@zxing/browser';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CameraOff } from 'lucide-react';
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
-  isScanning: boolean;
 }
 
-export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
+export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const codeReader = new BrowserMultiFormatReader();
-    let controls: IScannerControls;
+    let controls: any;
 
     const startScan = async () => {
       if (!videoRef.current || hasCameraPermission === false) return;
       try {
-        // Ask for permission and get stream
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         setHasCameraPermission(true);
         
@@ -36,7 +33,6 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
           if (result) {
             onScan(result.getText());
           }
-          // The error for "no barcode found" has the name "NotFoundException"
           if (err && err.name !== 'NotFoundException') {
             console.error('Barcode scan error:', err);
           }
@@ -55,7 +51,9 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
       }
     };
 
-    const stopScan = () => {
+    startScan();
+
+    return () => {
         if (controls) {
             controls.stop();
         }
@@ -64,18 +62,8 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
             stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
         }
-    }
-
-    if (isScanning) {
-      startScan();
-    } else {
-      stopScan();
-    }
-
-    return () => {
-      stopScan();
     };
-  }, [isScanning, onScan, toast, hasCameraPermission]);
+  }, [onScan, toast, hasCameraPermission]);
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted">
@@ -91,7 +79,7 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
             </Alert>
         </div>
       )}
-       {hasCameraPermission === null && isScanning && (
+       {hasCameraPermission === null && (
         <div className="absolute inset-0 flex items-center justify-center">
             <p>Requesting camera permission...</p>
         </div>
