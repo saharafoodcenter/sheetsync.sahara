@@ -107,16 +107,19 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
 
 export async function deleteInventoryItemFromSheet(id: string): Promise<{ success: boolean; id: string; }> {
      try {
+        // Read all of column A to find the row index of the item to delete.
+        // We get the whole column to find the 0-based index.
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A:A`, // Read all of column A to find the row index
+            range: `${INVENTORY_SHEET_NAME}!A1:A`, 
         });
 
         const rows = response.data.values;
         if (!rows) {
-            throw new Error(`Sheet is empty or item with id ${id} not found.`);
+            throw new Error(`Sheet '${INVENTORY_SHEET_NAME}' is empty or unreadable.`);
         }
         
+        // Find the 0-based index of the row that contains the matching ID.
         const rowIndex = rows.findIndex(row => row[0] === id);
         
         if (rowIndex === -1) {
@@ -131,9 +134,8 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
              throw new Error(`Could not find sheet with name ${INVENTORY_SHEET_NAME}`);
         }
 
-        // rowIndex is 0-based. We use it directly for the batchUpdate request.
-        const rowToDelete = rowIndex;
-
+        // The rowIndex is the correct 0-based index for the batchUpdate request.
+        // No offset needed because we fetched from A1.
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
             requestBody: {
@@ -142,8 +144,8 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
                         range: {
                             sheetId: sheetGid,
                             dimension: 'ROWS',
-                            startIndex: rowToDelete,
-                            endIndex: rowToDelete + 1,
+                            startIndex: rowIndex,
+                            endIndex: rowIndex + 1,
                         }
                     }
                 }]
@@ -153,6 +155,9 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
         return { success: true, id };
     } catch (error) {
         console.error('Error deleting item from Google Sheet:', error);
+        if (error instanceof Error) {
+            throw new Error(`Could not delete item from the database sheet: ${error.message}`);
+        }
         throw new Error('Could not delete item from the database sheet.');
     }
 }
