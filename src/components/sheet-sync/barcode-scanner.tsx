@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, type IScannerControls, NotFoundException } from '@zxing/browser';
+import { BrowserMultiFormatReader, NotFoundException } from '@zxing/browser';
+import type { IScannerControls } from '@zxing/browser';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CameraOff } from 'lucide-react';
@@ -13,30 +14,35 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-        if (permission.state === 'granted') {
-           setHasCameraPermission(true);
-        } else if (permission.state === 'prompt') {
-           setHasCameraPermission(null);
-        } else {
-           setHasCameraPermission(false);
-        }
-        
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setHasCameraPermission(true);
+    const codeReader = new BrowserMultiFormatReader();
+    let controls: IScannerControls;
 
+    const startScan = async () => {
+      if (!videoRef.current) return;
+      try {
+        // Ask for permission and get stream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        setHasCameraPermission(true);
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+        
+        controls = await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
+          if (result) {
+            onScan(result.getText());
+          }
+          if (err && !(err instanceof NotFoundException)) {
+            console.error('Barcode scan error:', err);
+          }
+        });
+
       } catch (error) {
-        console.error('Error accessing camera:', error);
+        console.error('Error accessing camera or starting scanner:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
@@ -46,71 +52,27 @@ export function BarcodeScanner({ onScan, isScanning }: BarcodeScannerProps) {
       }
     };
 
-    if (isScanning) {
-        getCameraPermission();
-    } else {
+    const stopScan = () => {
+        if (controls) {
+            controls.stop();
+        }
         if (videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
         }
-        if (controlsRef.current) {
-            controlsRef.current.stop();
-            controlsRef.current = null;
-        }
-    }
-  }, [isScanning, toast]);
-
-
-  useEffect(() => {
-    if (!isScanning || !hasCameraPermission || !videoRef.current) {
-        return;
     }
 
-    const codeReader = new BrowserMultiFormatReader();
-    const videoElement = videoRef.current;
-    
-    const startScan = async () => {
-        if (!videoElement) return;
-        try {
-           const controls = await codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
-                if (result) {
-                    onScan(result.getText());
-                }
-                if (err && !(err instanceof NotFoundException)) {
-                    console.error('Barcode scan error:', err);
-                }
-            });
-            controlsRef.current = controls;
-        } catch(err) {
-            if (err instanceof Error) {
-                console.error("Failed to start scanner:", err.message);
-            } else {
-                console.error("An unknown error occurred while starting the scanner.");
-            }
-        }
-    }
-
-    if (videoElement.readyState >= videoElement.HAVE_FUTURE_DATA) {
-        startScan();
+    if (isScanning) {
+      startScan();
     } else {
-        videoElement.oncanplay = () => {
-            startScan();
-        }
+      stopScan();
     }
 
     return () => {
-      if (controlsRef.current) {
-        controlsRef.current.stop();
-        controlsRef.current = null;
-      }
-      if (videoElement && videoElement.srcObject) {
-        const stream = videoElement.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-        videoElement.srcObject = null;
-      }
+      stopScan();
     };
-  }, [isScanning, onScan, hasCameraPermission]);
+  }, [isScanning, onScan, toast]);
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted">
