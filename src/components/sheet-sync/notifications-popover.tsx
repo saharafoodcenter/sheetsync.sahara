@@ -26,6 +26,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
     }, []);
 
   const expiringItems = useMemo(() => {
+    // This calculation now only runs on the client.
     if (!isClient) return [];
     const now = new Date();
     return allItems
@@ -34,14 +35,12 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
       .sort((a,b) => a.status.days - b.status.days);
   }, [allItems, isClient]);
 
-  const showBadge = isClient && expiringItems.length > 0;
-
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {showBadge && (
+          {isClient && expiringItems.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {expiringItems.length}
             </span>
@@ -57,26 +56,30 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
             </p>
           </div>
           <Separator />
-          {isClient && expiringItems.length > 0 ? (
-            <div className="grid gap-3 max-h-72 overflow-y-auto">
-              {expiringItems.map((item) => (
-                <div key={item.id} className="grid grid-cols-[25px_1fr] items-start gap-3">
-                    <span className={cn(
-                        "flex h-2 w-2 translate-y-1 rounded-full",
-                        item.status.status === 'expired' ? 'bg-destructive' : 'bg-warning'
-                    )} />
-                    <div className="grid gap-1">
-                        <p className="font-semibold leading-tight">{item.name}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {item.status.status === 'expired' ? <TriangleAlert className="h-4 w-4 text-destructive" /> : <CalendarClock className="h-4 w-4 text-warning" />}
-                            <span>{item.status.label} on {format(item.expiryDate, "MMM d")}</span>
-                        </div>
-                    </div>
-                </div>
-              ))}
-            </div>
+          {isClient ? (
+            expiringItems.length > 0 ? (
+              <div className="grid gap-3 max-h-72 overflow-y-auto">
+                {expiringItems.map((item) => (
+                  <div key={item.id} className="grid grid-cols-[25px_1fr] items-start gap-3">
+                      <span className={cn(
+                          "flex h-2 w-2 translate-y-1 rounded-full",
+                          item.status.status === 'expired' ? 'bg-destructive' : 'bg-warning'
+                      )} />
+                      <div className="grid gap-1">
+                          <p className="font-semibold leading-tight">{item.name}</p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              {item.status.status === 'expired' ? <TriangleAlert className="h-4 w-4 text-destructive" /> : <CalendarClock className="h-4 w-4 text-warning" />}
+                              <span>{item.status.label} on {format(item.expiryDate, "MMM d")}</span>
+                          </div>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+               <p className="text-sm text-muted-foreground text-center py-4">No expiry alerts. Good job!</p>
+            )
           ) : (
-             <p className="text-sm text-muted-foreground text-center py-4">{isClient ? "No expiry alerts. Good job!" : "Loading alerts..."}</p>
+            <p className="text-sm text-muted-foreground text-center py-4">Loading alerts...</p>
           )}
         </div>
       </PopoverContent>
