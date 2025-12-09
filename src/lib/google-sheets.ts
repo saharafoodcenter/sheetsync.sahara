@@ -107,8 +107,7 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
 
 export async function deleteInventoryItemFromSheet(id: string): Promise<{ success: boolean; id: string; }> {
      try {
-        // Read all of column A to find the row index of the item to delete.
-        // We get the whole column to find the 0-based index.
+        // First, get all the IDs from the inventory sheet to find the correct row index.
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
             range: `${INVENTORY_SHEET_NAME}!A1:A`, 
@@ -116,26 +115,28 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
 
         const rows = response.data.values;
         if (!rows) {
-            throw new Error(`Sheet '${INVENTORY_SHEET_NAME}' is empty or unreadable.`);
+            throw new Error(`Sheet '${INVENTORY_SHEET_NAME}' is empty or could not be read.`);
         }
         
-        // Find the 0-based index of the row that contains the matching ID.
+        // Find the 0-based index of the row containing the ID.
         const rowIndex = rows.findIndex(row => row[0] === id);
         
         if (rowIndex === -1) {
+             // If the item is not found, we can consider it "deleted" from the client's perspective
+             // or throw an error. Throwing an error provides better feedback.
              throw new Error(`Item with id ${id} not found in the sheet.`);
         }
 
+        // To delete a row, we need the sheet's grid ID (gid).
         const sheetResponse = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
         const sheetInfo = sheetResponse.data.sheets?.find(s => s.properties?.title === INVENTORY_SHEET_NAME);
         const sheetGid = sheetInfo?.properties?.sheetId;
 
         if (sheetGid === undefined) {
-             throw new Error(`Could not find sheet with name ${INVENTORY_SHEET_NAME}`);
+             throw new Error(`Could not find sheet with name '${INVENTORY_SHEET_NAME}' to get its ID.`);
         }
 
-        // The rowIndex is the correct 0-based index for the batchUpdate request.
-        // No offset needed because we fetched from A1.
+        // Use a batchUpdate request with deleteDimension to remove the specific row.
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
             requestBody: {
@@ -155,9 +156,7 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
         return { success: true, id };
     } catch (error) {
         console.error('Error deleting item from Google Sheet:', error);
-        if (error instanceof Error) {
-            throw new Error(`Could not delete item from the database sheet: ${error.message}`);
-        }
-        throw new Error('Could not delete item from the database sheet.');
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        throw new Error(`Could not delete item from the sheet: ${errorMessage}`);
     }
 }
