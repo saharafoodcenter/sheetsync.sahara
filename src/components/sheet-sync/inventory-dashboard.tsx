@@ -3,7 +3,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { InventoryItem } from '@/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PackageOpen, Package, TriangleAlert, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { getExpiryStatus, type ExpiryStatus } from '@/lib/utils';
@@ -13,10 +12,9 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
-
-type SortOption = 'expiry-asc' | 'expiry-desc' | 'name-asc' | 'name-desc' | 'added-desc';
 
 function StatCard({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description: string }) {
   return (
@@ -36,6 +34,7 @@ function StatCard({ title, value, icon, description }: { title: string, value: s
 export function InventoryDashboard({ initialItems }: { initialItems: InventoryItem[] }) {
   const [items] = useState<InventoryItem[]>(initialItems);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -90,7 +89,11 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                     </TableHeader>
                     <TableBody>
                         {soonestExpiringItems.map((item) => (
-                             <TableRow key={item.id}>
+                             <TableRow 
+                                key={item.id} 
+                                className="cursor-pointer"
+                                onClick={() => router.push(`/inventory#${item.id}`)}
+                             >
                                 <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
                                 <TableCell className="text-right">
