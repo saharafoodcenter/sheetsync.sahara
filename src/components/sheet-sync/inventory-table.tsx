@@ -16,15 +16,82 @@ import { Input } from "@/components/ui/input";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 import { cn } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { deleteItem } from "@/app/actions/inventory";
+import { useToast } from "@/hooks/use-toast";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
+function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id: string) => void }) {
+  const { toast } = useToast();
+
+  const handleDelete = async () => {
+    const result = await deleteItem(item.id);
+    if (result.message.includes("Error")) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.message,
+      });
+    } else {
+       toast({
+        title: "Success",
+        description: `"${item.name}" has been deleted.`,
+      });
+      onDeleted(item.id);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete item</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the item "{item.name}" from your inventory.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <form action={handleDelete}>
+             <AlertDialogAction type="submit">Delete</AlertDialogAction>
+          </form>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+
 export function InventoryTable({ items }: { items: InventoryItem[] }) {
+  const [currentItems, setCurrentItems] = useState(items);
   const [searchTerm, setSearchTerm] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
+  useEffect(() => {
+    setCurrentItems(items);
+  }, [items]);
+  
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== "undefined") {
@@ -47,14 +114,18 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     }
   }, [highlightedId]);
 
+  const handleItemDeleted = (id: string) => {
+    setCurrentItems(prevItems => prevItems.filter(item => item.id !== id));
+  };
+  
   const itemsWithStatus: ItemWithStatus[] = useMemo(() => {
-    if (!isClient) return items.map(item => ({ ...item, status: { status: 'fresh', label: 'Loading...', color: '', days: 99 } }));
+    if (!isClient) return currentItems.map(item => ({ ...item, status: { status: 'fresh', label: 'Loading...', color: '', days: 99 } }));
     const now = new Date();
-    return items.map(item => ({
+    return currentItems.map(item => ({
       ...item,
       status: getExpiryStatus(item.expiryDate, now)
     }));
-  }, [items, isClient]);
+  }, [currentItems, isClient]);
 
   const filteredItems = itemsWithStatus.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -75,9 +146,9 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
               <TableHead>Item Name</TableHead>
               <TableHead>Batch</TableHead>
               <TableHead>Added Date</TableHead>
-
               <TableHead>Expiry Date</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[50px] text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,12 +179,15 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                         {item.status.label}
                       </Badge>
                     </TableCell>
+                     <TableCell className="text-right">
+                       <DeleteAction item={item} onDeleted={handleItemDeleted} />
+                    </TableCell>
                   </TableRow>
                 );
               })
             ) : (
                <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   {isClient ? 'No results found.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
