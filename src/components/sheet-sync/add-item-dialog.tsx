@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, useActionState } from "react";
-import { Barcode, CalendarIcon, Loader2 } from "lucide-react";
+import { Barcode, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,15 +22,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./barcode-scanner";
 import type { BarcodeProduct } from "@/types";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Calendar } from "../ui/calendar";
-import { cn } from "@/lib/utils";
-
 
 const formSchema = z.object({
   barcode: z.string().optional(),
   name: z.string().min(1, "Item name is required."),
-  expiryDate: z.date({ required_error: "Expiry date is required." }),
+  expiryDate: z.string().min(1, "Expiry date is required."),
 });
 
 export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (isOpen: boolean) => void }) {
@@ -39,7 +35,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const [isFinding, startFinding] = useTransition();
   const [barcodeValue, setBarcodeValue] = useState("");
   const [foundProduct, setFoundProduct] = useState<BarcodeProduct | null>(null);
-  const [expiryDate, setExpiryDate] = useState<Date | undefined>();
 
   const [formState, formAction] = useActionState(addItem, {
     message: "",
@@ -49,7 +44,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", expiryDate: undefined },
+    defaultValues: { name: "", expiryDate: "" },
   });
 
   const resetDialog = () => {
@@ -57,14 +52,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     setBarcodeValue("");
     setScannerVisible(false);
     setFoundProduct(null);
-    setExpiryDate(undefined);
   }
-  
-  useEffect(() => {
-    if(expiryDate) {
-        form.setValue("expiryDate", expiryDate, { shouldValidate: true });
-    }
-  }, [expiryDate, form]);
 
   useEffect(() => {
     // Only close the dialog on SUCCESS
@@ -74,7 +62,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       onOpenChange(false);
     } else if (formState.message && formState.errors && Object.keys(formState.errors).length > 0) {
        // Errors are now handled inline, so we don't need to show a toast here.
-       // This also prevents the dialog from closing on error.
     }
   }, [formState, onOpenChange, toast]);
 
@@ -102,9 +89,8 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     setScannerVisible(false);
     toast({ title: "Scan Successful", description: `Barcode captured. Click lookup to continue.` });
   }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -115,18 +101,12 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     }}>
       <DialogContent className="sm:max-w-[425px]">
         <form action={formAction}
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit(() => {
-              const formData = new FormData();
-              const values = form.getValues();
-              formData.set('name', values.name);
-              if (values.expiryDate) {
-                formData.set('expiryDate', values.expiryDate.toISOString());
-              }
-              formAction(formData);
-            })(e)
-          }}
+          onSubmit={form.handleSubmit(data => {
+            const formData = new FormData();
+            formData.set('name', data.name);
+            formData.set('expiryDate', data.expiryDate);
+            formAction(formData);
+          })}
         >
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
@@ -161,36 +141,17 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                 <div className="space-y-2">
                   <Label htmlFor="name">Item Name</Label>
                   <Input id="name" {...form.register("name")} readOnly className="bg-muted"/>
-                  {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
                   {formState.errors?.name && <p className="text-sm text-destructive">{formState.errors.name[0]}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !expiryDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={expiryDate}
-                          onSelect={setExpiryDate}
-                          disabled={(date) => date < today}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  {form.formState.errors.expiryDate && <p className="text-sm text-destructive">{form.formState.errors.expiryDate.message}</p>}
-                   {formState.errors?.expiryDate && <p className="text-sm text-destructive">{formState.errors.expiryDate[0]}</p>}
+                   <Input 
+                    id="expiryDate" 
+                    type="date"
+                    min={today}
+                    {...form.register("expiryDate")}
+                    />
+                  {formState.errors?.expiryDate && <p className="text-sm text-destructive">{formState.errors.expiryDate[0]}</p>}
                 </div>
               </>
             )}
