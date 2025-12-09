@@ -71,9 +71,7 @@ function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <form action={handleDelete}>
-             <AlertDialogAction type="submit">Delete</AlertDialogAction>
-          </form>
+          <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
