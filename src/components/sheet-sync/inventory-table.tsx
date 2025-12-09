@@ -27,7 +27,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   }, []);
 
   const itemsWithStatus: ItemWithStatus[] = useMemo(() => {
-    if (!isClient) return [];
+    if (!isClient) return items.map(item => ({ ...item, status: { status: 'fresh', label: 'Loading...', color: '', days: 99 } }));
     const now = new Date();
     return items.map(item => ({
       ...item,
@@ -60,7 +60,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isClient && filteredItems.length > 0 ? (
+            {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 return (
                   <TableRow key={item.id}>
