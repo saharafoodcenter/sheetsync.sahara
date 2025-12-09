@@ -6,7 +6,7 @@ const serviceAccountPrivateKey = process.env.GCP_SA_PRIVATE_KEY?.replace(/\\n/g,
 const sheetId = process.env.SHEET_ID;
 
 const INVENTORY_SHEET_NAME = 'Inventory';
-const BARCODES_SHEET_NAME = 'Barcodes';
+const BARCODES_SHEET_NAME = 'database';
 
 
 const auth = new google.auth.GoogleAuth({
@@ -53,7 +53,7 @@ export async function getBarcodesFromSheet(): Promise<BarcodeProduct[]> {
      try {
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: `${BARCODES_SHEET_NAME}!A2:B`,
+            range: `${BARCODES_SHEET_NAME}!A1:B`,
         });
 
         const rows = response.data.values;
