@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useState, useTransition, useActionState } from "react";
 import { Barcode, Loader2, ScanLine } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,7 +37,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const [view, setView] = useState<View>("form");
   const [isFinding, startFinding] = useTransition();
 
-  const [formState, formAction] = useFormState(addItem, {
+  const [formState, formAction] = useActionState(addItem, {
     message: "",
     errors: {},
     success: false,
