@@ -83,7 +83,7 @@ function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+          <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-destructive hover:bg-destructive/90">
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Delete
           </AlertDialogAction>
@@ -112,7 +112,6 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
       const hash = window.location.hash.substring(1);
       if (hash) {
         setHighlightedId(hash);
-        // Find which group this item belongs to and open it
         const item = items.find(i => i.id === hash);
         if (item) {
             setOpenCollapsibles(prev => ({...prev, [item.barcode]: true}))
@@ -127,7 +126,6 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
         behavior: 'smooth',
         block: 'center',
       });
-      // Remove the highlight after a few seconds
       const timer = setTimeout(() => setHighlightedId(null), 3000);
       return () => clearTimeout(timer);
     }
@@ -181,7 +179,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="max-w-sm"
       />
-      <div className="rounded-md border">
+      <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -199,7 +197,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                 const isOpen = openCollapsibles[group.barcode] || false;
                 return (
                     <React.Fragment key={group.barcode}>
-                        <TableRow className="font-medium">
+                        <TableRow className="font-medium bg-card hover:bg-muted/50" data-state={isOpen ? 'open' : 'closed'}>
                             <TableCell>
                                 {group.count > 1 ? (
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleCollapsible(group.barcode)}>
@@ -211,23 +209,23 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                 )}
                             </TableCell>
                             <TableCell>{group.name}</TableCell>
-                            <TableCell>{group.barcode}</TableCell>
+                            <TableCell className="font-mono text-muted-foreground">{group.barcode}</TableCell>
                             <TableCell>{group.count}</TableCell>
                             <TableCell>{format(group.soonestExpiry, "MMM d, yyyy")}</TableCell>
                             <TableCell>
-                                <Badge className={cn(group.status.color, "text-xs")}>
+                                <Badge className={cn(group.status.color, "text-xs")} variant="outline">
                                     {group.status.label}
                                 </Badge>
                             </TableCell>
                         </TableRow>
                         {isOpen && group.count > 1 && (
-                           <tr className="bg-muted/50">
+                           <tr className="bg-muted/30">
                                 <TableCell colSpan={6} className="p-0">
                                     <div className="p-4">
-                                        <h4 className="font-semibold mb-2">Individual Items ({group.name})</h4>
+                                        <h4 className="font-semibold mb-2 text-sm">Individual Items ({group.name})</h4>
                                         <Table>
                                             <TableHeader>
-                                                <TableRow>
+                                                <TableRow className="hover:bg-transparent">
                                                     <TableHead>Expiry Date</TableHead>
                                                     <TableHead>Batch</TableHead>
                                                     <TableHead>Status</TableHead>
@@ -241,12 +239,12 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                                 <TableRow 
                                                     key={item.id}
                                                     ref={el => rowRefs.current[item.id] = el}
-                                                    className={cn("bg-background", isHighlighted && 'bg-primary/20 transition-all duration-1000 ease-out')}
+                                                    className={cn("bg-card hover:bg-card", isHighlighted && 'bg-primary/10 transition-all duration-1000 ease-out')}
                                                 >
                                                     <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
-                                                    <TableCell>{item.batch}</TableCell>
+                                                    <TableCell className="font-mono text-muted-foreground">{item.batch}</TableCell>
                                                     <TableCell>
-                                                        <Badge className={cn(item.status.color, "text-xs")}>
+                                                        <Badge className={cn(item.status.color, "text-xs")} variant="outline">
                                                             {item.status.label}
                                                         </Badge>
                                                     </TableCell>

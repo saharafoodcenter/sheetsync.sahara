@@ -16,9 +16,12 @@ import { useRouter } from 'next/navigation';
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
-function StatCard({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description: string }) {
+function StatCard({ title, value, icon, description, variant }: { title: string, value: string | number, icon: React.ReactNode, description: string, variant?: 'default' | 'warning' | 'destructive' }) {
   return (
-    <Card>
+    <Card className={cn(
+      variant === 'warning' && 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800',
+      variant === 'destructive' && 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {icon}
@@ -55,27 +58,28 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
     const now = new Date();
     return [...items]
       .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
+      .filter(item => item.status.status !== 'fresh')
       .sort((a, b) => a.status.days - b.status.days)
       .slice(0, 5);
   }, [items, isClient]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 p-4 pt-6 md:p-6">
        <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
         <p className="text-muted-foreground">A quick overview of your inventory.</p>
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Items" value={items.length} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
-        <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-muted-foreground" />} description="Items expiring in the next 7 days" />
-        <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-muted-foreground" />} description="Items that have already expired" />
+        <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 7 days" variant="warning" />
+        <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-400" />} description="Items that have already expired" variant="destructive" />
       </div>
 
       <Card>
           <CardHeader>
-              <CardTitle>Expiring Soon</CardTitle>
-              <p className="text-sm text-muted-foreground">These items are nearing their expiry date.</p>
+              <CardTitle>Needs Attention</CardTitle>
+              <p className="text-sm text-muted-foreground">These items are expiring soon or have already expired.</p>
           </CardHeader>
           <CardContent>
             {soonestExpiringItems.length > 0 ? (
@@ -91,13 +95,13 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                         {soonestExpiringItems.map((item) => (
                              <TableRow 
                                 key={item.id} 
-                                className="cursor-pointer"
+                                className="cursor-pointer hover:bg-muted/50"
                                 onClick={() => router.push(`/inventory#${item.id}`)}
                              >
                                 <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
                                 <TableCell className="text-right">
-                                     <Badge className={cn(item.status.color, "text-xs")}>
+                                     <Badge className={cn(item.status.color, "text-xs")} variant="outline">
                                         {item.status.label}
                                     </Badge>
                                 </TableCell>
@@ -107,16 +111,16 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                 </Table>
             ) : (
                 <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-                  <PackageOpen className="h-16 w-16 text-muted-foreground" />
+                  <PackageOpen className="h-16 w-16 text-muted-foreground/50" />
                   <p className="text-muted-foreground">{isClient ? "No items are expiring soon. Great job!" : "Loading..."}</p>
               </div>
             )}
           </CardContent>
-           {items.length > 0 && (
-            <CardFooter className="justify-end">
+           {items.length > 5 && (
+            <CardFooter className="justify-end border-t pt-4">
                 <Button asChild variant="ghost" size="sm">
                     <Link href="/inventory">
-                        View All
+                        View All Inventory
                         <ArrowRight className="ml-2 h-4 w-4"/>
                     </Link>
                 </Button>

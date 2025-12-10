@@ -1,26 +1,32 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package } from 'lucide-react';
+import { LayoutDashboard, Package, PanelLeft } from 'lucide-react';
 
 import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import { SidebarHeader, SidebarTrigger } from '../ui/sidebar';
+import { Button } from '../ui/button';
 
 const AppSidebar = () => {
   const pathname = usePathname();
+  const { state, toggleSidebar } = useSidebar();
 
   return (
     <>
-      <SidebarHeader>
+      <SidebarHeader className="border-b">
         <div className="flex items-center justify-between">
-          <Logo />
-          <SidebarTrigger />
+            <Logo />
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+              <PanelLeft />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -29,7 +35,7 @@ const AppSidebar = () => {
             <SidebarMenuButton
               asChild
               isActive={pathname === "/"}
-              tooltip="Dashboard"
+              tooltip={{children: "Dashboard", side: "right", align: "center"}}
             >
               <a href="/">
                 <LayoutDashboard />
@@ -41,7 +47,7 @@ const AppSidebar = () => {
             <SidebarMenuButton
               asChild
               isActive={pathname === "/inventory"}
-              tooltip="Inventory"
+              tooltip={{children: "Inventory", side: "right", align: "center"}}
             >
               <a href="/inventory">
                 <Package />

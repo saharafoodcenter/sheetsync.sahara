@@ -9,8 +9,11 @@ export default async function InventoryPage() {
   return (
     <>
       <Header allItems={inventoryItems} />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <h1 className="text-2xl font-bold tracking-tight">Full Inventory</h1>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Full Inventory</h1>
+          <p className="text-muted-foreground">Manage and view all your products.</p>
+        </div>
         <InventoryTable items={inventoryItems} />
       </main>
     </>
