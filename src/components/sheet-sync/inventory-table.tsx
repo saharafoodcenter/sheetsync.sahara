@@ -31,7 +31,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { deleteItem } from "@/app/actions/inventory";
 import { useToast } from "@/hooks/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
@@ -169,6 +168,10 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const filteredItems = groupedItems.filter((group) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const toggleCollapsible = (barcode: string) => {
+    setOpenCollapsibles(prev => ({...prev, [barcode]: !prev[barcode]}));
+  }
 
   return (
     <div className="space-y-4">
@@ -192,22 +195,16 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           </TableHeader>
           <TableBody>
             {filteredItems.length > 0 ? (
-              filteredItems.map((group) => (
-                <Collapsible 
-                    key={group.barcode}
-                    asChild
-                    open={openCollapsibles[group.barcode] || false}
-                    onOpenChange={(isOpen) => setOpenCollapsibles(prev => ({...prev, [group.barcode]: isOpen}))}
-                >
-                    <>
+              filteredItems.map((group) => {
+                const isOpen = openCollapsibles[group.barcode] || false;
+                return (
+                    <React.Fragment key={group.barcode}>
                         <TableRow className="font-medium">
                             <TableCell>
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        {openCollapsibles[group.barcode] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                                        <span className="sr-only">Toggle details</span>
-                                    </Button>
-                                </CollapsibleTrigger>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleCollapsible(group.barcode)}>
+                                    {isOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                    <span className="sr-only">Toggle details</span>
+                                </Button>
                             </TableCell>
                             <TableCell>{group.name}</TableCell>
                             <TableCell>{group.barcode}</TableCell>
@@ -219,7 +216,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                 </Badge>
                             </TableCell>
                         </TableRow>
-                        <CollapsibleContent asChild>
+                        {isOpen && (
                            <tr className="bg-muted/50">
                                 <TableCell colSpan={6} className="p-0">
                                     <div className="p-4">
@@ -260,10 +257,10 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                     </div>
                                 </TableCell>
                             </tr>
-                        </CollapsibleContent>
-                    </>
-                </Collapsible>
-              ))
+                        )}
+                    </React.Fragment>
+                )
+            })
             ) : (
                <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
@@ -277,4 +274,3 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     </div>
   );
 }
-
