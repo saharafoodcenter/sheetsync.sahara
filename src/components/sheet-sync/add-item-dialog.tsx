@@ -53,7 +53,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const addFormRef = useRef<HTMLFormElement>(null);
   const createFormRef = useRef<HTMLFormElement>(null);
 
-  const [addItemState, addItemAction] = useActionState(addItem, {
+  const [addItemState, addItemAction, isAddPending] = useActionState(addItem, {
     message: "",
     errors: {},
     success: false,
@@ -77,8 +77,8 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   useEffect(() => {
     if (addItemState.success) {
       toast({ title: "Success", description: "Item added to inventory." });
-      onOpenChange(false);
       resetDialog();
+      onOpenChange(false);
     } else if (addItemState.message && !addItemState.success && addItemState.errors && Object.keys(addItemState.errors).length === 0) {
         toast({ variant: 'destructive', title: "Error", description: addItemState.message });
     }
@@ -106,7 +106,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       const result = await findProductByBarcode(barcodeValue);
       if (result.success && result.product) {
         setFoundProduct(result.product);
-        toast({ title: "Product Found", description: `Ready to add "${result.product.name}".` });
       } else {
         setShowCreateForm(true);
         toast({ variant: 'destructive', title: "Not Found", description: "This barcode does not match any product. You can create a new one below." });
@@ -201,7 +200,10 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                         {addItemState.errors?.batch && <p className="text-sm text-destructive">{addItemState.errors.batch[0]}</p>}
                     </div>
                     <DialogFooter>
-                        <SubmitAddItemButton />
+                        <Button type="submit" disabled={isAddPending}>
+                          {isAddPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Add to Inventory
+                        </Button>
                     </DialogFooter>
                 </form>
             )}
