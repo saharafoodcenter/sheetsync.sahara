@@ -29,17 +29,19 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
   return (
     <>
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        {isMobile && toggleSidebar && (
-           <Button size="icon" variant="outline" className="sm:hidden" onClick={toggleSidebar}>
-              <PanelLeft className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-        )}
-        <div className="relative ml-auto flex-1 md:grow-0">
-           {/* Future search bar can go here */}
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-            <NotificationsPopover allItems={allItems} />
+        <div className="flex w-full items-center gap-4">
+          {isMobile && toggleSidebar && (
+            <Button size="icon" variant="outline" className="sm:hidden" onClick={toggleSidebar}>
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+          )}
+          <div className="relative ml-auto flex-1 md:grow-0">
+            {/* Future search bar can go here */}
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+              <NotificationsPopover allItems={allItems} />
+          </div>
         </div>
       </header>
     </>
