@@ -39,7 +39,7 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
           <div className="relative ml-auto flex-1 md:grow-0">
             {/* Future search bar can go here */}
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto">
               <NotificationsPopover allItems={allItems} />
           </div>
         </div>
