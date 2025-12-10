@@ -117,7 +117,6 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   const handleScanSuccess = (scannedBarcode: string) => {
     setBarcodeValue(scannedBarcode);
     setScannerVisible(false);
-    toast({ title: "Scan Successful", description: `Barcode captured. Click lookup to continue.` });
   }
   
   const today = format(new Date(), 'yyyy-MM-dd');
