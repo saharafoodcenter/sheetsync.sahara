@@ -193,8 +193,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             {filteredItems.length > 0 ? (
               filteredItems.map((group) => (
                 <Collapsible 
+                    key={group.barcode}
                     asChild
-                    key={group.barcode} 
                     open={openCollapsibles[group.barcode] || false}
                     onOpenChange={(isOpen) => setOpenCollapsibles(prev => ({...prev, [group.barcode]: isOpen}))}
                 >
