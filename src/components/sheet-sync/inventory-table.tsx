@@ -201,10 +201,14 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                     <React.Fragment key={group.barcode}>
                         <TableRow className="font-medium">
                             <TableCell>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleCollapsible(group.barcode)}>
-                                    {isOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                                    <span className="sr-only">Toggle details</span>
-                                </Button>
+                                {group.count > 1 ? (
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleCollapsible(group.barcode)}>
+                                        {isOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                        <span className="sr-only">Toggle details</span>
+                                    </Button>
+                                ) : (
+                                    <span className="inline-block h-8 w-8" />
+                                )}
                             </TableCell>
                             <TableCell>{group.name}</TableCell>
                             <TableCell>{group.barcode}</TableCell>
@@ -216,7 +220,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                 </Badge>
                             </TableCell>
                         </TableRow>
-                        {isOpen && (
+                        {isOpen && group.count > 1 && (
                            <tr className="bg-muted/50">
                                 <TableCell colSpan={6} className="p-0">
                                     <div className="p-4">
