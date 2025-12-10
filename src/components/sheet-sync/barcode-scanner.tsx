@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { CameraOff } from 'lucide-react';
@@ -14,29 +15,37 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const controlsRef = useRef<IScannerControls | null>(null);
 
   useEffect(() => {
     const codeReader = new BrowserMultiFormatReader();
-    let controls: any;
-
+    
     const startScan = async () => {
       if (!videoRef.current || hasCameraPermission === false) return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        setHasCameraPermission(true);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        // Ensure we only ask for permission once
+        if (hasCameraPermission === null) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          setHasCameraPermission(true);
+          
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
         }
         
-        controls = await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
-          if (result) {
-            onScan(result.getText());
-          }
-          if (err && err.name !== 'NotFoundException') {
-            console.error('Barcode scan error:', err);
-          }
-        });
+        // Only start decoding if we have permission and a video element
+        if (videoRef.current && hasCameraPermission !== false) {
+           controlsRef.current = await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
+            if (result) {
+              // Once a result is found, stop the scanner and call the onScan prop
+              controlsRef.current?.stop();
+              onScan(result.getText());
+            }
+            if (err && err.name !== 'NotFoundException' && err.name !== 'ChecksumException' && err.name !== 'FormatException') {
+              console.error('Barcode scan error:', err);
+            }
+          });
+        }
 
       } catch (error) {
         console.error('Error accessing camera or starting scanner:', error);
@@ -53,15 +62,17 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
 
     startScan();
 
+    // Cleanup function to stop scanner and camera
     return () => {
-        if (controls) {
-            controls.stop();
-        }
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-        }
+      if (controlsRef.current) {
+          controlsRef.current.stop();
+          controlsRef.current = null;
+      }
+      if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+      }
     };
   }, [onScan, toast, hasCameraPermission]);
 
