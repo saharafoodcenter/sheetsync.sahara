@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useTransition } from "react";
-import { format, min } from "date-fns";
+import { format } from "date-fns";
 import {
   Table,
   TableHeader,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, Loader2, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { deleteItem } from "@/app/actions/inventory";
 import { useToast } from "@/hooks/use-toast";
+import { AddItemDialog } from "./add-item-dialog";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
@@ -101,6 +102,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   useEffect(() => {
     setCurrentItems(items);
@@ -151,7 +153,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     }, {} as Record<string, ItemWithStatus[]>);
 
     return Object.values(groups).map(group => {
-        const soonestExpiry = min(group.map(item => item.expiryDate));
+        const soonestExpiry = group.reduce((soonest, item) => item.expiryDate < soonest ? item.expiryDate : soonest, group[0].expiryDate);
         return {
             name: group[0].name,
             barcode: group[0].barcode,
@@ -172,13 +174,20 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   }
 
   return (
+    <>
     <div className="space-y-4">
-      <Input
-        placeholder="Search products..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2 ml-auto">
+          <PlusCircle className="h-5 w-5" />
+          <span className="hidden sm:inline">Add Item</span>
+        </Button>
+      </div>
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
@@ -274,5 +283,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
         </Table>
       </div>
     </div>
+    <AddItemDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
+    </>
   );
 }

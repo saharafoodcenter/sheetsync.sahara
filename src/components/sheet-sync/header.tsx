@@ -1,24 +1,35 @@
 
 "use client";
 
-import { PlusCircle, PanelLeft } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { AddItemDialog } from "@/components/sheet-sync/add-item-dialog";
 import { NotificationsPopover } from "@/components/sheet-sync/notifications-popover";
 import type { InventoryItem } from "@/types";
-import { useState } from "react";
 import { useSidebar } from "../ui/sidebar";
 
-export function Header({ allItems }: { allItems: InventoryItem[] }) {
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const { isMobile, toggleSidebar } = useSidebar();
+type SidebarContextValue = {
+    isMobile: boolean;
+    toggleSidebar: () => void;
+} | {
+    isMobile: null;
+    toggleSidebar: null;
+};
 
+export function Header({ allItems }: { allItems: InventoryItem[] }) {
+  let sidebar: SidebarContextValue;
+  try {
+    sidebar = useSidebar();
+  } catch (e) {
+    sidebar = { isMobile: null, toggleSidebar: null };
+  }
+
+  const { isMobile, toggleSidebar } = sidebar;
 
   return (
     <>
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        {isMobile && (
+        {isMobile && toggleSidebar && (
            <Button size="icon" variant="outline" className="sm:hidden" onClick={toggleSidebar}>
               <PanelLeft className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
@@ -29,13 +40,8 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
         </div>
         <div className="ml-auto flex items-center gap-2">
             <NotificationsPopover allItems={allItems} />
-            <Button onClick={() => setIsAddOpen(true)} className="gap-2">
-              <PlusCircle className="h-5 w-5" />
-              <span className="hidden sm:inline">Add Item</span>
-            </Button>
         </div>
       </header>
-      <AddItemDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
     </>
   );
 }
