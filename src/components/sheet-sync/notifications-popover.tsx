@@ -34,13 +34,21 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
       .filter(item => item.status.status === 'expiring' || item.status.status === 'expired')
       .sort((a,b) => a.status.days - b.status.days);
   }, [allItems, isClient]);
+  
+  if (!isClient) {
+      return (
+         <Button variant="outline" size="icon" className="relative" disabled>
+            <Bell className="h-5 w-5" />
+         </Button>
+      )
+  }
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {isClient && expiringItems.length > 0 && (
+          {expiringItems.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {expiringItems.length}
             </span>
@@ -56,8 +64,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
             </p>
           </div>
           <Separator />
-          {isClient ? (
-            expiringItems.length > 0 ? (
+          {expiringItems.length > 0 ? (
               <div className="grid gap-3 max-h-72 overflow-y-auto">
                 {expiringItems.map((item) => (
                   <div key={item.id} className="grid grid-cols-[25px_1fr] items-start gap-3">
@@ -78,9 +85,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
             ) : (
                <p className="text-sm text-muted-foreground text-center py-4">No expiry alerts. Good job!</p>
             )
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">Loading alerts...</p>
-          )}
+          }
         </div>
       </PopoverContent>
     </Popover>
