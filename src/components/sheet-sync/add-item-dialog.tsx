@@ -77,8 +77,8 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   useEffect(() => {
     if (addItemState.success) {
       toast({ title: "Success", description: "Item added to inventory." });
-      resetDialog();
       onOpenChange(false);
+      resetDialog();
     } else if (addItemState.message && !addItemState.success && addItemState.errors && Object.keys(addItemState.errors).length === 0) {
         toast({ variant: 'destructive', title: "Error", description: addItemState.message });
     }
