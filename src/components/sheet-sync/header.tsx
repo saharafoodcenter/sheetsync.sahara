@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PlusCircle, PanelLeft } from "lucide-react";
@@ -26,11 +27,13 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
         <div className="relative ml-auto flex-1 md:grow-0">
            {/* Future search bar can go here */}
         </div>
-        <NotificationsPopover allItems={allItems} />
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
-          <PlusCircle className="h-5 w-5" />
-          <span className="hidden sm:inline">Add Item</span>
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+            <NotificationsPopover allItems={allItems} />
+            <Button onClick={() => setIsAddOpen(true)} className="gap-2">
+              <PlusCircle className="h-5 w-5" />
+              <span className="hidden sm:inline">Add Item</span>
+            </Button>
+        </div>
       </header>
       <AddItemDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
     </>
