@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useTransition } from "react";
+import React, { useState, useEffect, useMemo, useRef, useTransition } from "react";
 import { format, min } from "date-fns";
 import {
   Table,
