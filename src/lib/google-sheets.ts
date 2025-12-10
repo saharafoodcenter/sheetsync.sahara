@@ -1,5 +1,7 @@
+
 import { google } from "googleapis";
 import type { InventoryItem, BarcodeProduct } from "@/types";
+import { format } from "date-fns";
 
 const serviceAccountEmail = process.env.GCP_SA_EMAIL;
 const serviceAccountPrivateKey = process.env.GCP_SA_PRIVATE_KEY?.replace(/\\n/g, '\n');
@@ -105,8 +107,8 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
     const newRow = [
         newItem.id,
         newItem.name,
-        newItem.expiryDate.toISOString(),
-        newItem.addedDate.toISOString(),
+        format(newItem.expiryDate, "yyyy-MM-dd"),
+        format(newItem.addedDate, "yyyy-MM-dd"),
         newItem.batch,
         newItem.barcode,
     ];
