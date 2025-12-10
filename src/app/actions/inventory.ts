@@ -8,8 +8,9 @@ import {
   deleteInventoryItem,
   findProductByBarcode as findProduct,
   getInventoryData,
+  addNewProduct as addProduct,
 } from '@/lib/inventory-data';
-import { InventoryItem } from '@/types';
+import { InventoryItem, BarcodeProduct } from '@/types';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required.'),
@@ -18,6 +19,11 @@ const itemSchema = z.object({
     required_error: 'Expiry date is required.',
   }),
   batch: z.string().optional(),
+});
+
+const productSchema = z.object({
+    name: z.string().min(1, 'Product name is required.'),
+    barcode: z.string().min(1, 'Barcode is required.'),
 });
 
 export async function getInventory(): Promise<InventoryItem[]> {
@@ -94,4 +100,27 @@ export async function findProductByBarcode(barcode: string) {
        const message = e instanceof Error ? e.message : 'An error occurred.';
         return { success: false, message };
     }
+}
+
+export async function addNewProduct(prevState: any, formData: FormData) {
+  const validatedFields = productSchema.safeParse({
+    name: formData.get('name'),
+    barcode: formData.get('barcode'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Failed to create product.',
+      success: false,
+    };
+  }
+
+  try {
+    const newProduct = await addProduct(validatedFields.data);
+    return { message: 'Product created successfully.', errors: {}, success: true, product: newProduct };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Database Error: Failed to create product.';
+    return { message, errors: {}, success: false };
+  }
 }

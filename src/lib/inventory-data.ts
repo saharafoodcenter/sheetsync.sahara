@@ -3,7 +3,8 @@ import {
     getInventoryFromSheet, 
     getBarcodesFromSheet,
     addInventoryItemToSheet,
-    deleteInventoryItemFromSheet
+    deleteInventoryItemFromSheet,
+    addProductToSheet
 } from './google-sheets';
 
 
@@ -23,3 +24,7 @@ export async function findProductByBarcode(barcode: string): Promise<BarcodeProd
     const barcodes = await getBarcodesFromSheet();
     return barcodes.find(p => p.barcode === barcode);
 };
+
+export async function addNewProduct(product: BarcodeProduct): Promise<BarcodeProduct> {
+    return addProductToSheet(product);
+}

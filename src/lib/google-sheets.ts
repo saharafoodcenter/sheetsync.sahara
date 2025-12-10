@@ -71,6 +71,29 @@ export async function getBarcodesFromSheet(): Promise<BarcodeProduct[]> {
     }
 }
 
+export async function addProductToSheet(product: BarcodeProduct): Promise<BarcodeProduct> {
+    const newRow = [
+        product.barcode,
+        product.name,
+    ];
+
+    try {
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: sheetId,
+            range: `${BARCODES_SHEET_NAME}!A:B`,
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            requestBody: {
+                values: [newRow],
+            },
+        });
+        return product;
+    } catch (error) {
+        console.error('Error adding product to Google Sheet:', error);
+        throw new Error('Could not add product to the database sheet.');
+    }
+}
+
 export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | 'addedDate' | 'batch'> & { batch?: string }): Promise<InventoryItem> {
     const newItem: InventoryItem = {
         ...item,
@@ -107,7 +130,14 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
 
 export async function deleteInventoryItemFromSheet(id: string): Promise<{ success: boolean; id: string; }> {
      try {
-        // First, get all the IDs from the inventory sheet to find the correct row index.
+        const sheetResponse = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
+        const sheetInfo = sheetResponse.data.sheets?.find(s => s.properties?.title === INVENTORY_SHEET_NAME);
+        const sheetGid = sheetInfo?.properties?.sheetId;
+
+        if (sheetGid === undefined) {
+             throw new Error(`Could not find sheet with name '${INVENTORY_SHEET_NAME}' to get its ID.`);
+        }
+        
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
             range: `${INVENTORY_SHEET_NAME}!A1:A`, 
@@ -118,25 +148,12 @@ export async function deleteInventoryItemFromSheet(id: string): Promise<{ succes
             throw new Error(`Sheet '${INVENTORY_SHEET_NAME}' is empty or could not be read.`);
         }
         
-        // Find the 0-based index of the row containing the ID.
         const rowIndex = rows.findIndex(row => row[0] === id);
         
         if (rowIndex === -1) {
-             // If the item is not found, we can consider it "deleted" from the client's perspective
-             // or throw an error. Throwing an error provides better feedback.
              throw new Error(`Item with id ${id} not found in the sheet.`);
         }
 
-        // To delete a row, we need the sheet's grid ID (gid).
-        const sheetResponse = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
-        const sheetInfo = sheetResponse.data.sheets?.find(s => s.properties?.title === INVENTORY_SHEET_NAME);
-        const sheetGid = sheetInfo?.properties?.sheetId;
-
-        if (sheetGid === undefined) {
-             throw new Error(`Could not find sheet with name '${INVENTORY_SHEET_NAME}' to get its ID.`);
-        }
-
-        // Use a batchUpdate request with deleteDimension to remove the specific row.
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
             requestBody: {
