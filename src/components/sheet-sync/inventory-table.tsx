@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useTransition } from "react";
@@ -219,7 +220,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                             </TableCell>
                         </TableRow>
                         <CollapsibleContent asChild>
-                            <tr className="bg-muted/50">
+                           <tr className="bg-muted/50">
                                 <TableCell colSpan={6} className="p-0">
                                     <div className="p-4">
                                         <h4 className="font-semibold mb-2">Individual Items ({group.name})</h4>
@@ -276,3 +277,4 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     </div>
   );
 }
+
