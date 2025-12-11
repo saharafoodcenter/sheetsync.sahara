@@ -1,19 +1,12 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signOut, signInWithEmailAndPassword, sendPasswordResetEmail as firebaseSendPasswordResetEmail } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
-interface UserProfile {
-  status: 'pending' | 'approved' | 'rejected';
-  role: 'user' | 'admin';
-}
+import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
-  userProfile: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
@@ -24,30 +17,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
-      if (user) {
-        setUser(user);
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            setUserProfile(userDoc.data() as UserProfile);
-          } else {
-            setUserProfile(null);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setUserProfile(null);
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-      }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
     });
 
@@ -60,8 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     await signOut(auth);
-    setUser(null);
-    setUserProfile(null);
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -70,7 +42,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     user,
-    userProfile,
     loading,
     login,
     logout,
