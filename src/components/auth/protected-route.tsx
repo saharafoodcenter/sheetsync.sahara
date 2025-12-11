@@ -36,9 +36,7 @@ export default function ProtectedRoute({
         <AppSidebar />
       </Sidebar>
       <SidebarInset>
-        <div className='flex min-h-screen w-full flex-col'>
-          {children}
-        </div>
+        {children}
       </SidebarInset>
     </SidebarProvider>
   );

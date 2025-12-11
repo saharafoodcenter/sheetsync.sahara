@@ -17,16 +17,14 @@ const firebaseConfig = {
 let app: FirebaseApp;
 
 if (!firebaseConfig.apiKey) {
-    console.error("Firebase API key is missing. Please add it to your environment variables.");
-    // We'll create a dummy app object to prevent downstream errors,
-    // but auth will not work.
-    app = {} as FirebaseApp;
-} else if (!getApps().length) {
+    throw new Error("Firebase API key is missing. Please add NEXT_PUBLIC_FIREBASE_API_KEY to your environment variables.");
+}
+
+if (!getApps().length) {
     app = initializeApp(firebaseConfig);
 } else {
     app = getApp();
 }
 
-// Conditionally get auth and firestore if the app was initialized
-export const auth = firebaseConfig.apiKey ? getAuth(app) : ({} as any);
-export const db = firebaseConfig.apiKey ? getFirestore(app) : ({} as any);
+export const auth = getAuth(app);
+export const db = getFirestore(app);

@@ -1,3 +1,4 @@
+
 import ProtectedRoute from "@/components/auth/protected-route";
 import { getInventory } from "@/app/actions/inventory";
 import { Header } from "@/components/sheet-sync/header";
@@ -10,11 +11,13 @@ export default async function Home() {
 
   return (
     <ProtectedRoute>
-      <Header allItems={inventoryItems} />
-      <main className="flex flex-1 flex-col">
-        <DashboardHeader />
-        <InventoryDashboard initialItems={inventoryItems} />
-      </main>
+      <div className='flex min-h-screen w-full flex-col'>
+        <Header allItems={inventoryItems} />
+        <main className="flex flex-1 flex-col">
+          <DashboardHeader />
+          <InventoryDashboard initialItems={inventoryItems} />
+        </main>
+      </div>
     </ProtectedRoute>
   );
 }
