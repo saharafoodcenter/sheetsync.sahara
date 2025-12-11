@@ -13,7 +13,9 @@ export default async function Home() {
     <>
       <Header allItems={inventoryItems} />
       <main className="flex flex-1 flex-col">
-        <PageHeader title="Dashboard" description="A quick overview of your inventory." />
+        <div className="p-4 md:p-6">
+          <PageHeader title="Dashboard" description="A quick overview of your inventory." />
+        </div>
         <InventoryDashboard initialItems={inventoryItems} />
       </main>
     </>

@@ -64,13 +64,8 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
   }, [items, isClient]);
 
   return (
-    <div className="flex flex-col gap-8 p-4 pt-6 md:p-6">
-       <div>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
-        <p className="text-muted-foreground">A quick overview of your inventory.</p>
-       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Items" value={items.length} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
         <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 7 days" variant="warning" />
         <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-400" />} description="Items that have already expired" variant="destructive" />
@@ -83,32 +78,34 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
           </CardHeader>
           <CardContent>
             {soonestExpiringItems.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Item</TableHead>
-                            <TableHead>Expires</TableHead>
-                            <TableHead className="text-right">Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {soonestExpiringItems.map((item) => (
-                             <TableRow 
-                                key={item.id} 
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => router.push(`/inventory#${item.id}`)}
-                             >
-                                <TableCell className="font-medium">{item.name}</TableCell>
-                                <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
-                                <TableCell className="text-right">
-                                     <Badge className={cn(item.status.color, "text-xs")} variant="outline">
-                                        {item.status.label}
-                                    </Badge>
-                                </TableCell>
-                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Expires</TableHead>
+                                <TableHead className="text-right">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {soonestExpiringItems.map((item) => (
+                                <TableRow 
+                                    key={item.id} 
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => router.push(`/inventory#${item.id}`)}
+                                >
+                                    <TableCell className="font-medium">{item.name}</TableCell>
+                                    <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge className={cn(item.status.color, "text-xs")} variant="outline">
+                                            {item.status.label}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             ) : (
                 <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
                   <PackageOpen className="h-16 w-16 text-muted-foreground/50" />
