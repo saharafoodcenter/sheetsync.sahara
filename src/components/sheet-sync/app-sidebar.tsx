@@ -2,7 +2,7 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, Package, Menu } from 'lucide-react';
 
 import {
   SidebarContent,
@@ -25,7 +25,7 @@ const AppSidebar = () => {
         <div className="flex items-center justify-between">
             <Logo />
             <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
-              <PanelLeft />
+              <Menu />
               <span className="sr-only">Toggle Menu</span>
             </Button>
         </div>

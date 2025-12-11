@@ -1,7 +1,7 @@
 
 "use client";
 
-import { PanelLeft } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NotificationsPopover } from "@/components/sheet-sync/notifications-popover";
@@ -23,7 +23,7 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
         <div className="flex w-full items-center gap-4">
             {isMobile && toggleSidebar && (
             <Button size="icon" variant="outline" className="sm:hidden" onClick={toggleSidebar}>
-                <PanelLeft className="h-5 w-5" />
+                <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle Menu</span>
                 </Button>
             )}
