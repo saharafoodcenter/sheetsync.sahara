@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -16,7 +17,7 @@ import { Button } from '../ui/button';
 
 const AppSidebar = () => {
   const pathname = usePathname();
-  const { state, toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar();
 
   return (
     <>

@@ -83,7 +83,7 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Item</TableHead>
-                                <TableHead>Expires</TableHead>
+                                <TableHead className="hidden sm:table-cell">Expires</TableHead>
                                 <TableHead className="text-right">Status</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -94,8 +94,13 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                                     className="cursor-pointer hover:bg-muted/50"
                                     onClick={() => router.push(`/inventory#${item.id}`)}
                                 >
-                                    <TableCell className="font-medium">{item.name}</TableCell>
-                                    <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
+                                    <TableCell className="font-medium">
+                                        {item.name}
+                                        <div className="text-muted-foreground text-xs sm:hidden">
+                                            {format(item.expiryDate, "MMM d, yyyy")}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
                                     <TableCell className="text-right">
                                         <Badge className={cn(item.status.color, "text-xs")} variant="outline">
                                             {item.status.label}

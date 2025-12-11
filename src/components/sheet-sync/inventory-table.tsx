@@ -26,9 +26,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { deleteItem } from "@/app/actions/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { AddItemDialog } from "./add-item-dialog";
@@ -166,7 +177,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   }, [currentItems, isClient]);
 
   const filteredItems = groupedItems.filter((group) =>
-    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+    group.name.toLowerCase().includes(searchTerm.toLowerCase()) || group.barcode.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const toggleCollapsible = (barcode: string) => {
@@ -178,7 +189,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Search products..."
+          placeholder="Search products or barcodes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -188,7 +199,9 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           <span className="hidden sm:inline">Add Item</span>
         </Button>
       </div>
-      <div className="rounded-lg border">
+      
+      {/* Desktop Table View */}
+      <div className="hidden rounded-lg border sm:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -282,6 +295,77 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden space-y-4">
+        {filteredItems.length > 0 ? (
+            filteredItems.map(group => (
+                <Collapsible key={group.barcode} open={openCollapsibles[group.barcode]} onOpenChange={(isOpen) => setOpenCollapsibles(prev => ({...prev, [group.barcode]: isOpen}))}>
+                    <Card>
+                        <CardHeader className="p-4">
+                            <CardTitle className="text-base">{group.name}</CardTitle>
+                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                <p className="font-mono">{group.barcode}</p>
+                                <Badge className={cn(group.status.color, "text-xs")} variant="outline">
+                                    {group.status.label}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                             <div className="flex justify-between text-sm">
+                                <div className="text-muted-foreground">Quantity: <span className="font-medium text-foreground">{group.count}</span></div>
+                                <div className="text-muted-foreground">Expires: <span className="font-medium text-foreground">{format(group.soonestExpiry, "MMM d, yyyy")}</span></div>
+                            </div>
+                        </CardContent>
+                        {group.count > 1 && (
+                            <CardFooter className="p-4 pt-0">
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" className="w-full justify-center gap-2">
+                                        <span>{openCollapsibles[group.barcode] ? 'Hide' : 'Show'} {group.count} individual items</span>
+                                        {openCollapsibles[group.barcode] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                    </Button>
+                                </CollapsibleTrigger>
+                            </CardFooter>
+                        )}
+                        <CollapsibleContent>
+                            <div className="p-4 border-t">
+                                <h4 className="font-semibold mb-2 text-sm">Individual Items</h4>
+                                <div className="space-y-2">
+                                {group.items.map(item => (
+                                    <div 
+                                        key={item.id} 
+                                        ref={el => {
+                                            const tableRow = el as unknown as HTMLTableRowElement;
+                                            rowRefs.current[item.id] = tableRow;
+                                        }}
+                                        className={cn(
+                                            "flex justify-between items-center p-2 rounded-md", 
+                                            item.id === highlightedId && 'bg-primary/10'
+                                        )}
+                                    >
+                                        <div>
+                                            <p className="text-sm">Expires: {format(item.expiryDate, "MMM d, yyyy")}</p>
+                                            <p className="text-xs text-muted-foreground">Batch: {item.batch}</p>
+                                            <Badge className={cn("mt-1", item.status.color, "text-xs")} variant="outline">
+                                                {item.status.label}
+                                            </Badge>
+                                        </div>
+                                        <DeleteAction item={item} onDeleted={handleItemDeleted} />
+                                    </div>
+                                ))}
+                                </div>
+                            </div>
+                        </CollapsibleContent>
+                    </Card>
+                </Collapsible>
+            ))
+        ) : (
+            <div className="text-center py-12 text-muted-foreground">
+                {isClient ? 'No results found.' : 'Loading inventory...'}
+            </div>
+        )}
+      </div>
+
     </div>
     <AddItemDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
     </>
