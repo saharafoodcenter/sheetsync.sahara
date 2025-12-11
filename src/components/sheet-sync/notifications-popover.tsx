@@ -4,6 +4,7 @@
 import { Bell, CalendarClock, TriangleAlert } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { format } from 'date-fns';
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -65,9 +66,13 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
           </div>
           <Separator />
           {expiringItems.length > 0 ? (
-              <div className="grid gap-3 max-h-72 overflow-y-auto">
+              <div className="grid gap-1 max-h-72 overflow-y-auto">
                 {expiringItems.map((item) => (
-                  <div key={item.id} className="grid grid-cols-[25px_1fr] items-start gap-3">
+                  <Link
+                    key={item.id}
+                    href={`/inventory#${item.id}`}
+                    className="grid grid-cols-[25px_1fr] items-start gap-3 rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
+                  >
                       <span className={cn(
                           "flex h-2 w-2 translate-y-1 rounded-full",
                           item.status.status === 'expired' ? 'bg-destructive' : 'bg-warning'
@@ -79,7 +84,7 @@ export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }
                               <span>{item.status.label} on {format(item.expiryDate, "MMM d")}</span>
                           </div>
                       </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

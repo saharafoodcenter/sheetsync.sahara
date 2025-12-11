@@ -44,6 +44,7 @@ import {
 import { deleteItem } from "@/app/actions/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { AddItemDialog } from "./add-item-dialog";
+import { usePathname } from "next/navigation";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
@@ -112,9 +113,10 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const rowRefs = useRef<Record<string, HTMLElement | null>>({});
   const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setCurrentItems(items);
@@ -122,17 +124,15 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash.substring(1);
-      if (hash) {
-        setHighlightedId(hash);
-        const item = items.find(i => i.id === hash);
-        if (item) {
-            setOpenCollapsibles(prev => ({...prev, [item.barcode]: true}))
-        }
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      setHighlightedId(hash);
+      const item = items.find(i => i.id === hash);
+      if (item) {
+          setOpenCollapsibles(prev => ({...prev, [item.barcode]: true}))
       }
     }
-  }, [items]);
+  }, [items, pathname]); // Re-check hash on page navigation
 
   useEffect(() => {
     if (highlightedId && rowRefs.current[highlightedId]) {
@@ -140,7 +140,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
         behavior: 'smooth',
         block: 'center',
       });
-      const timer = setTimeout(() => setHighlightedId(null), 3000);
+      // Remove highlight after animation
+      const timer = setTimeout(() => setHighlightedId(null), 3000); 
       return () => clearTimeout(timer);
     }
   }, [highlightedId]);
@@ -270,7 +271,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                                 <TableRow 
                                                     key={item.id}
                                                     ref={el => rowRefs.current[item.id] = el}
-                                                    className={cn("bg-card hover:bg-card", isHighlighted && 'bg-primary/10 transition-all duration-1000 ease-out')}
+                                                    className={cn("bg-card hover:bg-card", isHighlighted && 'bg-primary/10 transition-colors duration-1000 ease-out')}
                                                 >
                                                     <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
                                                     <TableCell className="font-mono text-muted-foreground">{item.batch}</TableCell>
@@ -341,16 +342,15 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                             <div className="p-4 border-t">
                                 <h4 className="font-semibold mb-2 text-sm">Individual Items</h4>
                                 <div className="space-y-2">
-                                {group.items.map(item => (
+                                {group.items.map(item => {
+                                  const isHighlighted = item.id === highlightedId;
+                                  return (
                                     <div 
                                         key={item.id} 
-                                        ref={el => {
-                                            const tableRow = el as unknown as HTMLTableRowElement;
-                                            rowRefs.current[item.id] = tableRow;
-                                        }}
+                                        ref={el => rowRefs.current[item.id] = el}
                                         className={cn(
                                             "flex justify-between items-center p-2 rounded-md", 
-                                            item.id === highlightedId && 'bg-primary/10'
+                                            isHighlighted && 'bg-primary/10 transition-colors duration-1000 ease-out'
                                         )}
                                     >
                                         <div>
@@ -362,7 +362,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                         </div>
                                         <DeleteAction item={item} onDeleted={handleItemDeleted} />
                                     </div>
-                                ))}
+                                  )
+                                })}
                                 </div>
                             </div>
                         </CollapsibleContent>
