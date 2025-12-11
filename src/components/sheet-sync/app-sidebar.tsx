@@ -1,23 +1,31 @@
 
 "use client";
 
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Menu } from 'lucide-react';
-
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Package, Menu, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
+  SidebarFooter
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
-import { SidebarHeader, SidebarTrigger } from '../ui/sidebar';
+import { SidebarHeader } from '../ui/sidebar';
 import { Button } from '../ui/button';
 
 const AppSidebar = () => {
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   return (
     <>
@@ -58,6 +66,16 @@ const AppSidebar = () => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+         <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} tooltip={{children: "Log Out", side: "right", align: "center"}}>
+                    <LogOut />
+                    <span>Log Out</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+         </SidebarMenu>
+      </SidebarFooter>
     </>
   );
 };
