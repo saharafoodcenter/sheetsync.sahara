@@ -10,16 +10,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { Loader2 } from 'lucide-react';
-import { auth } from '@/lib/firebase';
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const { login, signup, user } = useAuth();
+  const { login, user, sendPasswordReset } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -28,19 +28,19 @@ export default function LoginPage() {
   }, [user, router]);
 
   if (user) {
-    return null; // or a loading spinner
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  const handleAuthAction = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      if (isSignUp) {
-        await signup(auth, email, password);
-      } else {
-        await login(auth, email, password);
-      }
+      await login(email, password);
       router.push('/');
     } catch (error: any) {
       console.error(error);
@@ -50,12 +50,9 @@ export default function LoginPage() {
         case 'auth/wrong-password':
           setError('Invalid email or password. Please try again.');
           break;
-        case 'auth/email-already-in-use':
-          setError('This email address is already in use.');
+        case 'auth/operation-not-allowed':
+          setError('Email/Password sign-in is not enabled. Please contact an administrator.');
           break;
-        case 'auth/weak-password':
-            setError('Password should be at least 6 characters.');
-            break;
         default:
           setError('An unexpected error occurred. Please try again later.');
           break;
@@ -65,18 +62,43 @@ export default function LoginPage() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("Please enter your email address to reset your password.");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      await sendPasswordReset(email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists for that email, a password reset link has been sent.",
+      });
+    } catch (error: any) {
+       console.error(error);
+       // Show a generic message to avoid disclosing whether an email exists
+       toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists for that email, a password reset link has been sent.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <Logo />
-          <CardTitle className="text-2xl font-bold">{isSignUp ? 'Create an Account' : 'Welcome Back'}</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
           <CardDescription>
-            {isSignUp ? 'Enter your email and password to get started.' : 'Enter your email and password to access your dashboard.'}
+            Enter your email and password to access your dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuthAction} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -89,7 +111,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                     <Button variant="link" type="button" onClick={handlePasswordReset} className="h-auto p-0 text-xs" disabled={loading}>
+                        Forgot password?
+                    </Button>
+                </div>
               <Input
                 id="password"
                 type="password"
@@ -101,15 +128,10 @@ export default function LoginPage() {
              {error && <p className="text-sm text-destructive text-center">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSignUp ? 'Sign Up' : 'Sign In'}
+              Sign In
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-            <Button variant="link" onClick={() => { setIsSignUp(!isSignUp); setError(null); }}>
-                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-            </Button>
-        </CardFooter>
       </Card>
     </div>
   );

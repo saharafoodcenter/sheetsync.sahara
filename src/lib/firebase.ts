@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // TODO: Add your Firebase project configuration
 const firebaseConfig = {
@@ -26,5 +27,6 @@ if (!firebaseConfig.apiKey) {
     app = getApp();
 }
 
-// Conditionally get auth if the app was initialized
+// Conditionally get auth and firestore if the app was initialized
 export const auth = firebaseConfig.apiKey ? getAuth(app) : ({} as any);
+export const db = firebaseConfig.apiKey ? getFirestore(app) : ({} as any);
