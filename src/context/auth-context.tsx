@@ -27,50 +27,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = useCallback(async (user: User | null) => {
-    if (user) {
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
-        } else {
-          // Handle case where user exists in Auth but not Firestore (should be rare)
-          setUserProfile(null); 
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setUserProfile(null);
-      }
-    } else {
-      setUserProfile(null);
-    }
-  }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
-      setUser(user);
-      await fetchUserProfile(user);
+      if (user) {
+        setUser(user);
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data() as UserProfile);
+          } else {
+            setUserProfile(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUserProfile(null);
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [fetchUserProfile]);
-  
+  }, []);
+
   const login = async (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
-  }
+  };
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
   };
-  
+
   const sendPasswordReset = async (email: string) => {
-      return firebaseSendPasswordResetEmail(auth, email);
-  }
+    return firebaseSendPasswordResetEmail(auth, email);
+  };
 
   const value = {
     user,
