@@ -212,6 +212,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
               <TableHead>Quantity</TableHead>
               <TableHead>Soonest Expiry</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[50px] text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -240,10 +241,17 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                     {group.status.label}
                                 </Badge>
                             </TableCell>
+                            <TableCell className="text-right">
+                                {group.count === 1 ? (
+                                    <DeleteAction item={group.items[0]} onDeleted={handleItemDeleted} />
+                                ) : (
+                                     <span className="inline-block h-8 w-8" />
+                                )}
+                            </TableCell>
                         </TableRow>
                         {isOpen && group.count > 1 && (
                            <tr className="bg-muted/30">
-                                <TableCell colSpan={6} className="p-0">
+                                <TableCell colSpan={7} className="p-0">
                                     <div className="p-4">
                                         <h4 className="font-semibold mb-2 text-sm">Individual Items ({group.name})</h4>
                                         <Table>
@@ -288,7 +296,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             })
             ) : (
                <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {isClient ? 'No results found.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
@@ -303,20 +311,21 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             filteredItems.map(group => (
                 <Collapsible key={group.barcode} open={openCollapsibles[group.barcode]} onOpenChange={(isOpen) => setOpenCollapsibles(prev => ({...prev, [group.barcode]: isOpen}))}>
                     <Card>
-                        <CardHeader className="p-4">
-                            <CardTitle className="text-base">{group.name}</CardTitle>
-                            <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                <p className="font-mono">{group.barcode}</p>
-                                <Badge className={cn(group.status.color, "text-xs")} variant="outline">
+                        <CardHeader className="p-4 flex flex-row items-start justify-between">
+                            <div>
+                                <CardTitle className="text-base">{group.name}</CardTitle>
+                                <p className="font-mono text-sm text-muted-foreground">{group.barcode}</p>
+                            </div>
+                            {group.count === 1 && <DeleteAction item={group.items[0]} onDeleted={handleItemDeleted} />}
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                             <div className="flex justify-between items-center text-sm">
+                                <div className="text-muted-foreground">Quantity: <span className="font-medium text-foreground">{group.count}</span></div>
+                                 <Badge className={cn(group.status.color, "text-xs")} variant="outline">
                                     {group.status.label}
                                 </Badge>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                             <div className="flex justify-between text-sm">
-                                <div className="text-muted-foreground">Quantity: <span className="font-medium text-foreground">{group.count}</span></div>
-                                <div className="text-muted-foreground">Expires: <span className="font-medium text-foreground">{format(group.soonestExpiry, "MMM d, yyyy")}</span></div>
-                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">Expires: <span className="font-medium text-foreground">{format(group.soonestExpiry, "MMM d, yyyy")}</span></p>
                         </CardContent>
                         {group.count > 1 && (
                             <CardFooter className="p-4 pt-0">
