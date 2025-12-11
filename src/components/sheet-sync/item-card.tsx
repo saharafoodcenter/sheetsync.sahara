@@ -77,9 +77,7 @@ export function ItemCard({ item }: { item: InventoryItem }) {
 
   useEffect(() => {
     // getExpiryStatus is now only called on the client after hydration
-    if (typeof window !== 'undefined') {
-      setStatus(getExpiryStatus(item.expiryDate, new Date()));
-    }
+    setStatus(getExpiryStatus(item.expiryDate, new Date()));
   }, [item.expiryDate]);
 
   if (!status) {
