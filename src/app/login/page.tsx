@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,14 @@ export default function LoginPage() {
   const { login, signup, user } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   if (user) {
-    router.push('/');
-    return null;
+    return null; // or a loading spinner
   }
 
   const handleAuthAction = async (e: React.FormEvent) => {
