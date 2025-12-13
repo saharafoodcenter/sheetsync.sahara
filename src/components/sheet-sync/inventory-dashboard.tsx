@@ -44,13 +44,24 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
   }, []);
 
   const stats = useMemo(() => {
-    if (!isClient) return { expiringSoon: 0, expired: 0 };
+    if (!isClient) return { total: 0, expiringSoon: 0, expired: 0 };
     const now = new Date();
-    const statuses = items.map(item => getExpiryStatus(item.expiryDate, now));
-    return {
-      expiringSoon: statuses.filter(s => s.status === 'expiring').length,
-      expired: statuses.filter(s => s.status === 'expired').length,
-    }
+    
+    let total = 0;
+    let expiringSoon = 0;
+    let expired = 0;
+
+    items.forEach(item => {
+        const status = getExpiryStatus(item.expiryDate, now);
+        total += item.quantity;
+        if (status.status === 'expiring') {
+            expiringSoon += item.quantity;
+        } else if (status.status === 'expired') {
+            expired += item.quantity;
+        }
+    });
+
+    return { total, expiringSoon, expired };
   }, [items, isClient]);
 
   const soonestExpiringItems = useMemo(() => {
@@ -66,7 +77,7 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Items" value={items.length} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
+        <StatCard title="Total Items" value={isClient ? stats.total : '...'} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
         <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 7 days" variant="warning" />
         <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-400" />} description="Items that have already expired" variant="destructive" />
       </div>
@@ -74,7 +85,7 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
       <Card>
           <CardHeader>
               <CardTitle>Needs Attention</CardTitle>
-              <p className="text-sm text-muted-foreground">These items are expiring soon or have already expired.</p>
+              <p className="text-sm text-muted-foreground">These batches are expiring soon or have already expired.</p>
           </CardHeader>
           <CardContent>
             {soonestExpiringItems.length > 0 ? (
@@ -95,7 +106,7 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
                                     onClick={() => router.push(`/inventory#${item.id}`)}
                                 >
                                     <TableCell className="font-medium">
-                                        {item.name}
+                                        {item.name} ({item.quantity} pcs)
                                         <div className="text-muted-foreground text-xs sm:hidden">
                                             {format(item.expiryDate, "MMM d, yyyy")}
                                         </div>

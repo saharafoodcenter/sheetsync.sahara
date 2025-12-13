@@ -51,7 +51,7 @@ type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 type GroupedItem = {
     name: string;
     barcode: string;
-    count: number;
+    totalQuantity: number;
     items: ItemWithStatus[];
     soonestExpiry: Date;
     status: ExpiryStatus;
@@ -67,7 +67,7 @@ function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id
       if (result.success) {
         toast({
           title: "Success",
-          description: `"${item.name}" has been deleted.`,
+          description: `Batch of "${item.name}" has been deleted.`,
         });
         onDeleted(item.id);
       } else {
@@ -85,14 +85,14 @@ function DeleteAction({ item, onDeleted }: { item: InventoryItem, onDeleted: (id
       <AlertDialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isPending}>
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> :<Trash2 className="h-4 w-4" />}
-          <span className="sr-only">Delete item</span>
+          <span className="sr-only">Delete item batch</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the item "{item.name}" from your inventory.
+            This action cannot be undone. This will permanently delete the batch of {item.quantity} pc(s) of "{item.name}" expiring on {format(item.expiryDate, "MMM d, yyyy")}.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -167,10 +167,11 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
 
     return Object.values(groups).map(group => {
         const soonestExpiry = group.reduce((soonest, item) => item.expiryDate < soonest ? item.expiryDate : soonest, group[0].expiryDate);
+        const totalQuantity = group.reduce((sum, item) => sum + item.quantity, 0);
         return {
             name: group[0].name,
             barcode: group[0].barcode,
-            count: group.length,
+            totalQuantity,
             items: group.sort((a,b) => a.expiryDate.getTime() - b.expiryDate.getTime()),
             soonestExpiry: soonestExpiry,
             status: getExpiryStatus(soonestExpiry, now)
@@ -210,10 +211,9 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>Product Name</TableHead>
               <TableHead>Barcode</TableHead>
-              <TableHead>Quantity</TableHead>
+              <TableHead>Total Quantity</TableHead>
               <TableHead>Soonest Expiry</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[50px] text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -222,44 +222,33 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                 const isOpen = openCollapsibles[group.barcode] || false;
                 return (
                     <React.Fragment key={group.barcode}>
-                        <TableRow className="font-medium bg-card hover:bg-muted/50" data-state={isOpen ? 'open' : 'closed'}>
+                        <TableRow className="font-medium bg-card hover:bg-muted/50 cursor-pointer" data-state={isOpen ? 'open' : 'closed'} onClick={() => toggleCollapsible(group.barcode)}>
                             <TableCell>
-                                {group.count > 1 ? (
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleCollapsible(group.barcode)}>
-                                        {isOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                                        <span className="sr-only">Toggle details</span>
-                                    </Button>
-                                ) : (
-                                    <span className="inline-block h-8 w-8" />
-                                )}
+                               <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    {isOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                    <span className="sr-only">Toggle details</span>
+                                </Button>
                             </TableCell>
                             <TableCell>{group.name}</TableCell>
                             <TableCell className="font-mono text-muted-foreground">{group.barcode}</TableCell>
-                            <TableCell>{group.count}</TableCell>
+                            <TableCell>{group.totalQuantity}</TableCell>
                             <TableCell>{format(group.soonestExpiry, "MMM d, yyyy")}</TableCell>
                             <TableCell>
                                 <Badge className={cn(group.status.color, "text-xs")} variant="outline">
                                     {group.status.label}
                                 </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
-                                {group.count === 1 ? (
-                                    <DeleteAction item={group.items[0]} onDeleted={handleItemDeleted} />
-                                ) : (
-                                     <span className="inline-block h-8 w-8" />
-                                )}
-                            </TableCell>
                         </TableRow>
-                        {isOpen && group.count > 1 && (
+                        {isOpen && (
                            <tr className="bg-muted/30">
-                                <TableCell colSpan={7} className="p-0">
+                                <TableCell colSpan={6} className="p-0">
                                     <div className="p-4">
-                                        <h4 className="font-semibold mb-2 text-sm">Individual Items ({group.name})</h4>
+                                        <h4 className="font-semibold mb-2 text-sm">Expiry Batches for {group.name}</h4>
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="hover:bg-transparent">
                                                     <TableHead>Expiry Date</TableHead>
-                                                    <TableHead>Added Date</TableHead>
+                                                    <TableHead>Quantity</TableHead>
                                                     <TableHead>Status</TableHead>
                                                     <TableHead className="w-[50px] text-right">Action</TableHead>
                                                 </TableRow>
@@ -274,13 +263,13 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                                     className={cn("bg-card hover:bg-card", isHighlighted && 'bg-primary/10 transition-colors duration-1000 ease-out')}
                                                 >
                                                     <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{format(item.addedDate, "MMM d, yyyy")}</TableCell>
+                                                    <TableCell>{item.quantity}</TableCell>
                                                     <TableCell>
                                                         <Badge className={cn(item.status.color, "text-xs")} variant="outline">
                                                             {item.status.label}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                         <DeleteAction item={item} onDeleted={handleItemDeleted} />
                                                     </TableCell>
                                                 </TableRow>
@@ -297,7 +286,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             })
             ) : (
                <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   {isClient ? 'No results found.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
@@ -317,30 +306,27 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                 <CardTitle className="text-base">{group.name}</CardTitle>
                                 <p className="font-mono text-sm text-muted-foreground">{group.barcode}</p>
                             </div>
-                            {group.count === 1 && <DeleteAction item={group.items[0]} onDeleted={handleItemDeleted} />}
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
                              <div className="flex justify-between items-center text-sm">
-                                <div className="text-muted-foreground">Quantity: <span className="font-medium text-foreground">{group.count}</span></div>
+                                <div className="text-muted-foreground">Total Quantity: <span className="font-medium text-foreground">{group.totalQuantity}</span></div>
                                  <Badge className={cn(group.status.color, "text-xs")} variant="outline">
                                     {group.status.label}
                                 </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">Expires: <span className="font-medium text-foreground">{format(group.soonestExpiry, "MMM d, yyyy")}</span></p>
+                            <p className="text-sm text-muted-foreground mt-1">Soonest Expiry: <span className="font-medium text-foreground">{format(group.soonestExpiry, "MMM d, yyyy")}</span></p>
                         </CardContent>
-                        {group.count > 1 && (
-                            <CardFooter className="p-4 pt-0">
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="ghost" className="w-full justify-center gap-2">
-                                        <span>{openCollapsibles[group.barcode] ? 'Hide' : 'Show'} {group.count} individual items</span>
-                                        {openCollapsibles[group.barcode] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                                    </Button>
-                                </CollapsibleTrigger>
-                            </CardFooter>
-                        )}
+                        <CardFooter className="p-4 pt-0">
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" className="w-full justify-center gap-2">
+                                    <span>{openCollapsibles[group.barcode] ? 'Hide' : 'Show'} Expiry Batches</span>
+                                    {openCollapsibles[group.barcode] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                </Button>
+                            </CollapsibleTrigger>
+                        </CardFooter>
                         <CollapsibleContent>
                             <div className="p-4 border-t">
-                                <h4 className="font-semibold mb-2 text-sm">Individual Items</h4>
+                                <h4 className="font-semibold mb-2 text-sm">Expiry Batches</h4>
                                 <div className="space-y-2">
                                 {group.items.map(item => {
                                   const isHighlighted = item.id === highlightedId;
@@ -355,7 +341,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                     >
                                         <div>
                                             <p className="text-sm">Expires: {format(item.expiryDate, "MMM d, yyyy")}</p>
-                                            <p className="text-xs text-muted-foreground">Added: {format(item.addedDate, "MMM d, yyyy")}</p>
+                                            <p className="text-sm font-medium">Quantity: {item.quantity}</p>
                                             <Badge className={cn("mt-1", item.status.color, "text-xs")} variant="outline">
                                                 {item.status.label}
                                             </Badge>

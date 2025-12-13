@@ -63,10 +63,7 @@ export async function addItem(prevState: any, formData: FormData) {
 
   try {
     const { name, barcode, expiryDate, quantity } = validatedFields.data;
-    // Add an item for each quantity
-    for (let i = 0; i < quantity; i++) {
-        await addInventoryItem({ name, barcode, expiryDate });
-    }
+    await addInventoryItem({ name, barcode, expiryDate, quantity });
     revalidatePath('/');
     revalidatePath('/inventory');
     return { message: `${quantity} item(s) added successfully.`, errors: {}, success: true };
@@ -82,7 +79,7 @@ export async function deleteItem(id: string) {
     await deleteInventoryItem(id);
     revalidatePath('/');
     revalidatePath('/inventory');
-    return { message: 'Item deleted.', success: true };
+    return { message: 'Item batch deleted.', success: true };
   } catch (e) {
      const message = e instanceof Error ? e.message : 'Database Error: Failed to delete item.';
     return { message, success: false };

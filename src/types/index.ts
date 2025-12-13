@@ -4,6 +4,7 @@ export interface InventoryItem {
   expiryDate: Date;
   addedDate: Date;
   barcode: string;
+  quantity: number;
 }
 
 export interface BarcodeProduct {
