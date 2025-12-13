@@ -1,14 +1,31 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/sheet-sync/page-header";
 import { Button } from "@/components/ui/button";
 import { AddItemDialog } from "@/components/sheet-sync/add-item-dialog";
+import { ChangelogDialog } from "./changelog-dialog";
+
+const APP_VERSION = '1.1.0';
+const LAST_VIEWED_VERSION_KEY = 'sheet-sync-last-viewed-version';
 
 export function DashboardHeader() {
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [showChangelog, setShowChangelog] = useState(false);
+
+    useEffect(() => {
+        const lastViewedVersion = localStorage.getItem(LAST_VIEWED_VERSION_KEY);
+        if (lastViewedVersion !== APP_VERSION) {
+            setShowChangelog(true);
+        }
+    }, []);
+
+    const handleChangelogClose = () => {
+        setShowChangelog(false);
+        localStorage.setItem(LAST_VIEWED_VERSION_KEY, APP_VERSION);
+    };
 
     return (
         <>
@@ -21,6 +38,7 @@ export function DashboardHeader() {
                 </PageHeader>
             </div>
             <AddItemDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
+            <ChangelogDialog open={showChangelog} onOpenChange={handleChangelogClose} />
         </>
     );
 }
