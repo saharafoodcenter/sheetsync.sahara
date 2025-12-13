@@ -259,7 +259,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                             <TableHeader>
                                                 <TableRow className="hover:bg-transparent">
                                                     <TableHead>Expiry Date</TableHead>
-                                                    <TableHead>Batch</TableHead>
+                                                    <TableHead>Added Date</TableHead>
                                                     <TableHead>Status</TableHead>
                                                     <TableHead className="w-[50px] text-right">Action</TableHead>
                                                 </TableRow>
@@ -274,7 +274,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                                     className={cn("bg-card hover:bg-card", isHighlighted && 'bg-primary/10 transition-colors duration-1000 ease-out')}
                                                 >
                                                     <TableCell>{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
-                                                    <TableCell className="font-mono text-muted-foreground">{item.batch}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{format(item.addedDate, "MMM d, yyyy")}</TableCell>
                                                     <TableCell>
                                                         <Badge className={cn(item.status.color, "text-xs")} variant="outline">
                                                             {item.status.label}
@@ -355,7 +355,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
                                     >
                                         <div>
                                             <p className="text-sm">Expires: {format(item.expiryDate, "MMM d, yyyy")}</p>
-                                            <p className="text-xs text-muted-foreground">Batch: {item.batch}</p>
+                                            <p className="text-xs text-muted-foreground">Added: {format(item.addedDate, "MMM d, yyyy")}</p>
                                             <Badge className={cn("mt-1", item.status.color, "text-xs")} variant="outline">
                                                 {item.status.label}
                                             </Badge>

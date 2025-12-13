@@ -18,7 +18,7 @@ const itemSchema = z.object({
   expiryDate: z.coerce.date({
     required_error: 'Expiry date is required.',
   }),
-  batch: z.string().optional(),
+  quantity: z.coerce.number().min(1, 'Quantity must be at least 1.'),
 });
 
 const productSchema = z.object({
@@ -40,7 +40,7 @@ export async function addItem(prevState: any, formData: FormData) {
     name: formData.get('name'),
     barcode: formData.get('barcode'),
     expiryDate: formData.get('expiryDate'),
-    batch: formData.get('batch'),
+    quantity: formData.get('quantity'),
   });
 
   if (!validatedFields.success) {
@@ -61,15 +61,15 @@ export async function addItem(prevState: any, formData: FormData) {
     }
   }
 
-
   try {
-    await addInventoryItem({
-        ...validatedFields.data,
-        batch: validatedFields.data.batch || 'N/A'
-    });
+    const { name, barcode, expiryDate, quantity } = validatedFields.data;
+    // Add an item for each quantity
+    for (let i = 0; i < quantity; i++) {
+        await addInventoryItem({ name, barcode, expiryDate });
+    }
     revalidatePath('/');
     revalidatePath('/inventory');
-    return { message: 'Item added successfully.', errors: {}, success: true };
+    return { message: `${quantity} item(s) added successfully.`, errors: {}, success: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Database Error: Failed to add item.';
     return { message, errors: {}, success: false };

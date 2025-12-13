@@ -28,8 +28,7 @@ function sheetRowToInventoryItem(row: any[]): InventoryItem | null {
         name: row[1],
         expiryDate: new Date(row[2]),
         addedDate: new Date(row[3]),
-        batch: row[4],
-        barcode: row[5],
+        barcode: row[4],
     };
 }
 
@@ -38,7 +37,7 @@ export async function getInventoryFromSheet(): Promise<InventoryItem[]> {
     try {
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A2:F`,
+            range: `${INVENTORY_SHEET_NAME}!A2:E`,
         });
 
         const rows = response.data.values;
@@ -96,11 +95,10 @@ export async function addProductToSheet(product: BarcodeProduct): Promise<Barcod
     }
 }
 
-export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | 'addedDate' | 'batch'> & { batch?: string }): Promise<InventoryItem> {
+export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | 'addedDate'>): Promise<InventoryItem> {
     const newItem: InventoryItem = {
         ...item,
         id: crypto.randomUUID(),
-        batch: item.batch || 'N/A',
         addedDate: new Date(),
     };
 
@@ -109,14 +107,13 @@ export async function addInventoryItemToSheet(item: Omit<InventoryItem, 'id' | '
         newItem.name,
         format(newItem.expiryDate, "yyyy-MM-dd"),
         format(newItem.addedDate, "yyyy-MM-dd"),
-        newItem.batch,
         newItem.barcode,
     ];
 
     try {
         await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: `${INVENTORY_SHEET_NAME}!A:F`,
+            range: `${INVENTORY_SHEET_NAME}!A:E`,
             valueInputOption: 'USER_ENTERED',
             insertDataOption: 'INSERT_ROWS',
             requestBody: {

@@ -76,7 +76,7 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
 
   useEffect(() => {
     if (addItemState.success) {
-      toast({ title: "Success", description: "Item added to inventory." });
+      toast({ title: "Success", description: addItemState.message });
       resetDialog();
       onOpenChange(false);
     } else if (addItemState.message && !addItemState.success && addItemState.errors && Object.keys(addItemState.errors).length === 0) {
@@ -179,25 +179,28 @@ export function AddItemDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                         <Input defaultValue={foundProduct.name} readOnly className="bg-muted"/>
                         {addItemState.errors?.name && <p className="text-sm text-destructive">{addItemState.errors.name[0]}</p>}
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="expiryDate">Expiry Date</Label>
-                        <Input 
-                            id="expiryDate" 
-                            name="expiryDate"
-                            type="date"
-                            min={today}
-                        />
-                        {addItemState.errors?.expiryDate && <p className="text-sm text-destructive">{addItemState.errors.expiryDate[0]}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="batch">Batch Number (Optional)</Label>
-                        <Input 
-                            id="batch" 
-                            name="batch"
-                            type="text"
-                            placeholder="e.g. B123"
-                        />
-                        {addItemState.errors?.batch && <p className="text-sm text-destructive">{addItemState.errors.batch[0]}</p>}
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="quantity">Quantity</Label>
+                            <Input 
+                                id="quantity" 
+                                name="quantity"
+                                type="number"
+                                defaultValue="1"
+                                min="1"
+                            />
+                            {addItemState.errors?.quantity && <p className="text-sm text-destructive">{addItemState.errors.quantity[0]}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="expiryDate">Expiry Date</Label>
+                            <Input 
+                                id="expiryDate" 
+                                name="expiryDate"
+                                type="date"
+                                min={today}
+                            />
+                            {addItemState.errors?.expiryDate && <p className="text-sm text-destructive">{addItemState.errors.expiryDate[0]}</p>}
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isAddPending}>

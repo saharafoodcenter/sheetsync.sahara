@@ -3,7 +3,6 @@ export interface InventoryItem {
   name: string;
   expiryDate: Date;
   addedDate: Date;
-  batch: string;
   barcode: string;
 }
 
