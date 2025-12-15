@@ -78,7 +78,7 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Items" value={isClient ? stats.total : '...'} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
-        <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 7 days" variant="warning" />
+        <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 30 days" variant="warning" />
         <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-400" />} description="Items that have already expired" variant="destructive" />
       </div>
 

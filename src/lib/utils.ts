@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { differenceInDays, format, formatDistanceToNow, isToday, isTomorrow } from "date-fns";
@@ -29,7 +30,7 @@ export function getExpiryStatus(expiryDate: Date, comparisonDate: Date): ExpiryS
       days: daysUntilExpiry,
     };
   }
-  if (daysUntilExpiry <= 7) {
+  if (daysUntilExpiry <= 30) {
     let label;
     if (daysUntilExpiry === 0) {
       label = 'Expires today';
