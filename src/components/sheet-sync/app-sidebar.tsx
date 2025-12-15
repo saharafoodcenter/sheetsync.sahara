@@ -3,23 +3,20 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Package, Menu, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
   SidebarFooter
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import { SidebarHeader } from '../ui/sidebar';
-import { Button } from '../ui/button';
 
 const AppSidebar = () => {
   const pathname = usePathname();
-  const { toggleSidebar } = useSidebar();
   const { logout } = useAuth();
   const router = useRouter();
 
@@ -30,14 +27,8 @@ const AppSidebar = () => {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between">
-            <Logo />
-            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-              <Menu />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-        </div>
+      <SidebarHeader className="border-b justify-center h-14 items-center">
+        <Logo />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

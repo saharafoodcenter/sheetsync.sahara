@@ -20,18 +20,38 @@ import { useInventory } from "@/context/inventory-context";
 import { Loader2 } from "lucide-react";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
+const VIEWED_NOTIFICATIONS_KEY = 'sheet-sync-viewed-notifications';
+
 
 export function NotificationsPopover() {
     const { items, loading } = useInventory();
+    const [viewedItems, setViewedItems] = useState<string[]>([]);
 
-  const expiringItems = useMemo(() => {
-    if (loading) return [];
-    const now = new Date();
-    return items
-      .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
-      .filter(item => item.status.status === 'expiring' || item.status.status === 'expired')
-      .sort((a,b) => a.status.days - b.status.days);
-  }, [items, loading]);
+    useEffect(() => {
+        const storedViewedItems = localStorage.getItem(VIEWED_NOTIFICATIONS_KEY);
+        if (storedViewedItems) {
+            setViewedItems(JSON.parse(storedViewedItems));
+        }
+    }, []);
+
+    const handleMarkAsViewed = (itemId: string) => {
+        const newViewedItems = [...viewedItems, itemId];
+        setViewedItems(newViewedItems);
+        localStorage.setItem(VIEWED_NOTIFICATIONS_KEY, JSON.stringify(newViewedItems));
+    };
+
+    const expiringItems = useMemo(() => {
+        if (loading) return [];
+        const now = new Date();
+        return items
+          .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
+          .filter(item => {
+              const isExpiringOrExpired = item.status.days <= 10;
+              const hasBeenViewed = viewedItems.includes(item.id);
+              return isExpiringOrExpired && !hasBeenViewed;
+          })
+          .sort((a,b) => a.status.days - b.status.days);
+    }, [items, loading, viewedItems]);
   
   if (loading) {
       return (
@@ -68,6 +88,7 @@ export function NotificationsPopover() {
                   <Link
                     key={item.id}
                     href={`/inventory#${item.id}`}
+                    onClick={() => handleMarkAsViewed(item.id)}
                     className="grid grid-cols-[25px_1fr] items-start gap-3 rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
                   >
                       <span className={cn(
@@ -85,7 +106,7 @@ export function NotificationsPopover() {
                 ))}
               </div>
             ) : (
-               <p className="text-sm text-muted-foreground text-center py-4">No expiry alerts. Good job!</p>
+               <p className="text-sm text-muted-foreground text-center py-4">No new expiry alerts. Good job!</p>
             )
           }
         </div>

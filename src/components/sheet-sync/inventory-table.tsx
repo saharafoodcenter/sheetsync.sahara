@@ -232,46 +232,50 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   return (
     <>
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row">
-        <Input
-          placeholder="Search products or barcodes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
-            <Select value={selectedMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by Month" />
-                </SelectTrigger>
-                <SelectContent>
-                    {availableMonths.map(month => (
-                        <SelectItem key={month} value={month}>
-                            {format(new Date(month + '-02'), "MMMM yyyy")}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-
-            <DatePicker
-              value={selectedDate}
-              onChange={handleDateChange}
-              className="w-full sm:w-auto"
-              placeholder="Filter by Date"
-              allowClear={true}
+       <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <Input
+              placeholder="Search products or barcodes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
             />
+            <div className="flex flex-wrap gap-2">
+                <Select value={selectedMonth} onValueChange={handleMonthChange}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableMonths.map(month => (
+                            <SelectItem key={month} value={month}>
+                                {format(new Date(month + '-02'), "MMMM yyyy")}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-            {hasActiveFilters && (
-              <Button variant="ghost" onClick={clearFilters} className="gap-2">
-                <XIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Clear</span>
-              </Button>
-            )}
+                <DatePicker
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  className="w-full sm:w-auto"
+                  placeholder="Filter by Date"
+                  allowClear={true}
+                />
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" onClick={clearFilters} className="gap-2">
+                    <XIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Clear</span>
+                  </Button>
+                )}
+            </div>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2 md:ml-auto">
-          <PlusCircle className="h-5 w-5" />
-          <span>Add Item</span>
-        </Button>
+        <div className="flex-shrink-0">
+            <Button onClick={() => setIsAddOpen(true)} className="gap-2 w-full md:w-auto">
+              <PlusCircle className="h-5 w-5" />
+              <span>Add Item</span>
+            </Button>
+        </div>
       </div>
       
       {/* Desktop Table View */}

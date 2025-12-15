@@ -1,9 +1,10 @@
+
 "use client"
 
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { ChevronLeft, PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -141,7 +142,7 @@ const SidebarProvider = React.forwardRef<
               } as React.CSSProperties
             }
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              "group/sidebar-wrapper has-[[data-variant=inset]]:bg-sidebar",
               className
             )}
             ref={ref}
@@ -225,7 +226,7 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "duration-200 relative h-svh bg-transparent transition-[width] ease-in-out",
+            "relative h-svh bg-transparent transition-[width] duration-300 ease-in-out",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -235,7 +236,7 @@ const Sidebar = React.forwardRef<
         />
         <div
           className={cn(
-            "duration-200 fixed inset-y-0 z-20 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-in-out sm:flex",
+            "fixed inset-y-0 z-20 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-300 ease-in-out sm:flex",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:-left-[--sidebar-width]"
               : "right-0 group-data-[collapsible=offcanvas]:-right-[--sidebar-width]",
@@ -264,7 +265,11 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state, isMobile } = useSidebar()
+
+  if (isMobile) {
+    return null
+  }
 
   return (
     <Button
@@ -272,14 +277,26 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn(
+        "fixed top-3 z-50 size-7 rounded-full border bg-background text-foreground shadow-sm transition-all duration-300 ease-in-out",
+        "peer-data-[side=left]:left-[--sidebar-width] peer-data-[side=left]:-translate-x-1/2",
+        "peer-data-[side=right]:right-[--sidebar-width] peer-data-[side=right]:translate-x-1/2",
+        "peer-data-[state=collapsed]:peer-data-[side=left]:left-[--sidebar-width-icon]",
+        "peer-data-[state=collapsed]:peer-data-[side=right]:right-[--sidebar-width-icon]",
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <PanelLeft />
+      <ChevronLeft
+        className={cn(
+          "size-4 transition-transform",
+          state === "collapsed" && "rotate-180"
+        )}
+      />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -323,7 +340,7 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background",
+        "flex-1 bg-background",
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] sm:peer-data-[variant=inset]:m-2 sm:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 sm:peer-data-[variant=inset]:ml-0 sm:peer-data-[variant=inset]:rounded-xl sm:peer-data-[variant=inset]:border sm:peer-data-[variant=inset]:shadow-sm",
         className
       )}

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect }from 'react';
 import type { InventoryItem } from '@/types';
 import { PackageOpen, Package, TriangleAlert, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
-function StatCard({ title, value, icon, description, variant }: { title: string, value: string | number, icon: React.ReactNode, description: string, variant?: 'default' | 'warning' | 'destructive' }) {
+function StatCard({ title, value, icon, description, variant }: { title: string, value: string | number, icon: React.ReactNode, description?: string, variant?: 'default' | 'warning' | 'destructive' }) {
   return (
     <Card className={cn(
       variant === 'warning' && 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800',
@@ -28,7 +28,7 @@ function StatCard({ title, value, icon, description, variant }: { title: string,
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </CardContent>
     </Card>
   )
@@ -43,25 +43,25 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
     setIsClient(true);
   }, []);
 
-  const stats = useMemo(() => {
-    if (!isClient) return { total: 0, expiringSoon: 0, expired: 0 };
+  const { stats } = useMemo(() => {
+    if (!isClient) return { stats: { total: 0, expiringSoon: 0, expired: 0 } };
     const now = new Date();
     
     let total = 0;
     let expiringSoon = 0;
     let expired = 0;
-
+    
     items.forEach(item => {
         const status = getExpiryStatus(item.expiryDate, now);
         total += item.quantity;
-        if (status.status === 'expiring') {
-            expiringSoon += item.quantity;
-        } else if (status.status === 'expired') {
+        if (status.status === 'expired') {
             expired += item.quantity;
+        } else if (status.days <= 30) {
+            expiringSoon += item.quantity;
         }
     });
 
-    return { total, expiringSoon, expired };
+    return { stats: { total, expiringSoon, expired } };
   }, [items, isClient]);
 
   const soonestExpiringItems = useMemo(() => {
@@ -76,70 +76,71 @@ export function InventoryDashboard({ initialItems }: { initialItems: InventoryIt
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Items" value={isClient ? stats.total : '...'} icon={<Package className="h-4 w-4 text-muted-foreground" />} description="All items currently in stock" />
         <StatCard title="Expiring Soon" value={isClient ? stats.expiringSoon : '...'} icon={<TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />} description="Items expiring in the next 30 days" variant="warning" />
         <StatCard title="Expired" value={isClient ? stats.expired : '...'} icon={<ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-400" />} description="Items that have already expired" variant="destructive" />
       </div>
-
-      <Card>
-          <CardHeader>
-              <CardTitle>Needs Attention</CardTitle>
-              <p className="text-sm text-muted-foreground">These batches are expiring soon or have already expired.</p>
-          </CardHeader>
-          <CardContent>
-            {soonestExpiringItems.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead className="hidden sm:table-cell">Expires</TableHead>
-                                <TableHead className="text-right">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {soonestExpiringItems.map((item) => (
-                                <TableRow 
-                                    key={item.id} 
-                                    className="cursor-pointer hover:bg-muted/50"
-                                    onClick={() => router.push(`/inventory#${item.id}`)}
-                                >
-                                    <TableCell className="font-medium">
-                                        {item.name} ({item.quantity} pcs)
-                                        <div className="text-muted-foreground text-xs sm:hidden">
-                                            {format(item.expiryDate, "MMM d, yyyy")}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="hidden sm:table-cell">{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge className={cn(item.status.color, "text-xs")} variant="outline">
-                                            {item.status.label}
-                                        </Badge>
-                                    </TableCell>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+        <Card>
+            <CardHeader>
+                <CardTitle>Needs Attention</CardTitle>
+                <p className="text-sm text-muted-foreground">These batches are expiring soon or have expired.</p>
+            </CardHeader>
+            <CardContent>
+                {soonestExpiringItems.length > 0 ? (
+                    <div className="overflow-hidden">
+                        <Table className="table-fixed">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50%]">Item</TableHead>
+                                    <TableHead className="w-[25%] hidden sm:table-cell">Expires</TableHead>
+                                    <TableHead className="w-[25%] text-right">Status</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {soonestExpiringItems.map((item) => (
+                                    <TableRow 
+                                        key={item.id} 
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={() => router.push(`/inventory#${item.id}`)}
+                                    >
+                                        <TableCell className="font-medium">
+                                            <div className="truncate" title={item.name}>{item.name} ({item.quantity} pcs)</div>
+                                            <div className="text-muted-foreground text-xs sm:hidden">
+                                                {format(item.expiryDate, "MMM d, yyyy")}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden sm:table-cell">{format(item.expiryDate, "MMM d, yyyy")}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge className={cn(item.status.color, "text-xs")} variant="outline">
+                                                {item.status.label}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                    <PackageOpen className="h-16 w-16 text-muted-foreground/50" />
+                    <p className="text-muted-foreground">{isClient ? "No items are expiring soon. Great job!" : "Loading..."}</p>
                 </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-                  <PackageOpen className="h-16 w-16 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">{isClient ? "No items are expiring soon. Great job!" : "Loading..."}</p>
-              </div>
+                )}
+            </CardContent>
+            {items.length > 5 && (
+                <CardFooter className="justify-end border-t pt-4">
+                    <Button asChild variant="ghost" size="sm">
+                        <Link href="/inventory">
+                            View All Inventory
+                            <ArrowRight className="ml-2 h-4 w-4"/>
+                        </Link>
+                    </Button>
+                </CardFooter>
             )}
-          </CardContent>
-           {items.length > 5 && (
-            <CardFooter className="justify-end border-t pt-4">
-                <Button asChild variant="ghost" size="sm">
-                    <Link href="/inventory">
-                        View All Inventory
-                        <ArrowRight className="ml-2 h-4 w-4"/>
-                    </Link>
-                </Button>
-            </CardFooter>
-           )}
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

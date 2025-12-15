@@ -5,7 +5,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/sheet-sync/app-sidebar';
 import { InventoryProvider } from '@/context/inventory-context';
 import { Header } from '@/components/sheet-sync/header';
@@ -35,16 +35,20 @@ export default function ProtectedRoute({
   return (
     <InventoryProvider>
       <SidebarProvider>
-        <Sidebar collapsible="icon" variant="sidebar" side="left">
-          <AppSidebar />
-        </Sidebar>
-        <SidebarInset>
-            <div className='flex min-h-screen w-full flex-col'>
+        <div className="relative flex min-h-screen w-full">
+            <Sidebar collapsible="icon" variant="sidebar" side="left">
+              <AppSidebar />
+            </Sidebar>
+            <SidebarTrigger />
+            <SidebarInset>
                 <Header />
-                {children}
-            </div>
-        </SidebarInset>
+                <div className='flex flex-1 w-full flex-col'>
+                    {children}
+                </div>
+            </SidebarInset>
+        </div>
       </SidebarProvider>
     </InventoryProvider>
   );
 }
+    
