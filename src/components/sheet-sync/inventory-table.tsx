@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useTransition } from "react";
-import { format, getMonth, getYear } from "date-fns";
+import { format } from "date-fns";
 import {
   Table,
   TableHeader,
