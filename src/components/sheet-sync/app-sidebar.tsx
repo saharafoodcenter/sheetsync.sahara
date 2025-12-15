@@ -33,7 +33,7 @@ const AppSidebar = () => {
       <SidebarHeader className="border-b">
         <div className="flex items-center justify-between">
             <Logo />
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
               <Menu />
               <span className="sr-only">Toggle Menu</span>
             </Button>
