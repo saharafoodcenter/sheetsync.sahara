@@ -2,6 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { LayoutDashboard, Package, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -46,10 +47,10 @@ const AppSidebar = () => {
               isActive={pathname === "/"}
               tooltip={{children: "Dashboard", side: "right", align: "center"}}
             >
-              <a href="/">
+              <Link href="/">
                 <LayoutDashboard />
                 <span>Dashboard</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -58,10 +59,10 @@ const AppSidebar = () => {
               isActive={pathname === "/inventory"}
               tooltip={{children: "Inventory", side: "right", align: "center"}}
             >
-              <a href="/inventory">
+              <Link href="/inventory">
                 <Package />
                 <span>Inventory</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
