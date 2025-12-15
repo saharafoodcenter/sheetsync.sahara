@@ -31,30 +31,31 @@ export function DatePicker({ value, onChange, className, disabled, placeholder =
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !value && "text-muted-foreground",
-            className
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : <span>{placeholder}</span>}
-          {allowClear && value && (
+      <div className={cn("relative w-full", className)}>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !value && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? format(value, "PPP") : <span>{placeholder}</span>}
+          </Button>
+        </PopoverTrigger>
+        {allowClear && value && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 ml-auto"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
               onClick={handleClear}
             >
               <X className="h-4 w-4 text-muted-foreground" />
               <span className="sr-only">Clear date</span>
             </Button>
-          )}
-        </Button>
-      </PopoverTrigger>
+        )}
+      </div>
       <PopoverContent className="w-auto p-0">
         <Calendar
           mode="single"

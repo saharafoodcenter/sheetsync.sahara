@@ -239,9 +239,9 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
             <Select value={selectedMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filter by Month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,7 +256,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             <DatePicker
               value={selectedDate}
               onChange={handleDateChange}
-              className="w-full md:w-[200px]"
+              className="w-full sm:w-auto"
               placeholder="Filter by Date"
               allowClear={true}
             />
@@ -439,5 +439,3 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     </>
   );
 }
-
-    
