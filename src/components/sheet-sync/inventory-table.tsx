@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useTransition } from "react";
-import { format } from "date-fns";
+import { format, getMonth, getYear } from "date-fns";
 import {
   Table,
   TableHeader,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import type { InventoryItem } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, PlusCircle, Trash2, XIcon } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +45,8 @@ import { deleteItem } from "@/app/actions/inventory";
 import { useToast } from "@/hooks/use-toast";
 import { AddItemDialog } from "./add-item-dialog";
 import { usePathname } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { DatePicker } from "../ui/date-picker";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
@@ -117,6 +119,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
   const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
   const [isAddOpen, setIsAddOpen] = useState(false);
   const pathname = usePathname();
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     setCurrentItems(items);
@@ -150,11 +154,30 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     setCurrentItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    currentItems.forEach(item => {
+      months.add(format(item.expiryDate, "yyyy-MM"));
+    });
+    return Array.from(months).sort();
+  }, [currentItems]);
+
   const groupedItems: GroupedItem[] = useMemo(() => {
     if (!isClient) return [];
     
     const now = new Date();
-    const itemsWithStatus = currentItems.map(item => ({
+
+    const dateFilteredItems = currentItems.filter(item => {
+        if (selectedDate) {
+            return format(item.expiryDate, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+        }
+        if (selectedMonth) {
+            return format(item.expiryDate, 'yyyy-MM') === selectedMonth;
+        }
+        return true;
+    });
+
+    const itemsWithStatus = dateFilteredItems.map(item => ({
       ...item,
       status: getExpiryStatus(item.expiryDate, now)
     }));
@@ -166,6 +189,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     }, {} as Record<string, ItemWithStatus[]>);
 
     return Object.values(groups).map(group => {
+        if (group.length === 0) return null;
         const soonestExpiry = group.reduce((soonest, item) => item.expiryDate < soonest ? item.expiryDate : soonest, group[0].expiryDate);
         const totalQuantity = group.reduce((sum, item) => sum + item.quantity, 0);
         return {
@@ -176,8 +200,8 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             soonestExpiry: soonestExpiry,
             status: getExpiryStatus(soonestExpiry, now)
         }
-    }).sort((a, b) => a.soonestExpiry.getTime() - b.soonestExpiry.getTime());
-  }, [currentItems, isClient]);
+    }).filter((g): g is GroupedItem => g !== null).sort((a, b) => a.soonestExpiry.getTime() - b.soonestExpiry.getTime());
+  }, [currentItems, isClient, selectedMonth, selectedDate]);
 
   const filteredItems = groupedItems.filter((group) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) || group.barcode.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,19 +211,66 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     setOpenCollapsibles(prev => ({...prev, [barcode]: !prev[barcode]}));
   }
 
+  const clearFilters = () => {
+    setSelectedMonth("");
+    setSelectedDate(undefined);
+    setSearchTerm("");
+  };
+
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value);
+    setSelectedDate(undefined);
+  };
+  
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    setSelectedMonth("");
+  }
+  
+  const hasActiveFilters = selectedMonth || selectedDate || searchTerm;
+
   return (
     <>
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 md:flex-row">
         <Input
           placeholder="Search products or barcodes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2 ml-auto">
+        <div className="flex gap-2">
+            <Select value={selectedMonth} onValueChange={handleMonthChange}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by Month" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableMonths.map(month => (
+                        <SelectItem key={month} value={month}>
+                            {format(new Date(month + '-02'), "MMMM yyyy")}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            <DatePicker
+              value={selectedDate}
+              onChange={handleDateChange}
+              className="w-full md:w-[200px]"
+              placeholder="Filter by Date"
+              allowClear={true}
+            />
+
+            {hasActiveFilters && (
+              <Button variant="ghost" onClick={clearFilters} className="gap-2">
+                <XIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
+            )}
+        </div>
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2 md:ml-auto">
           <PlusCircle className="h-5 w-5" />
-          <span className="hidden sm:inline">Add Item</span>
+          <span>Add Item</span>
         </Button>
       </div>
       
@@ -287,7 +358,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             ) : (
                <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  {isClient ? 'No results found.' : 'Loading inventory...'}
+                  {isClient ? 'No results found for the selected filters.' : 'Loading inventory...'}
                 </TableCell>
               </TableRow>
             )}
@@ -358,7 +429,7 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
             ))
         ) : (
             <div className="text-center py-12 text-muted-foreground">
-                {isClient ? 'No results found.' : 'Loading inventory...'}
+                {isClient ? 'No results found for the selected filters.' : 'Loading inventory...'}
             </div>
         )}
       </div>
@@ -368,3 +439,5 @@ export function InventoryTable({ items }: { items: InventoryItem[] }) {
     </>
   );
 }
+
+    

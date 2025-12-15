@@ -1,8 +1,9 @@
+
 "use client"
 
 import * as React from "react"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,9 +19,16 @@ type DatePickerProps = {
   onChange: (date: Date | undefined) => void;
   className?: string;
   disabled?: (date: Date) => boolean;
+  placeholder?: string;
+  allowClear?: boolean;
 }
 
-export function DatePicker({ value, onChange, className, disabled }: DatePickerProps) {
+export function DatePicker({ value, onChange, className, disabled, placeholder = "Pick a date", allowClear = false }: DatePickerProps) {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(undefined);
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -33,7 +41,18 @@ export function DatePicker({ value, onChange, className, disabled }: DatePickerP
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : <span>Pick a date</span>}
+          {value ? format(value, "PPP") : <span>{placeholder}</span>}
+          {allowClear && value && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-auto"
+              onClick={handleClear}
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+              <span className="sr-only">Clear date</span>
+            </Button>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
@@ -48,3 +67,5 @@ export function DatePicker({ value, onChange, className, disabled }: DatePickerP
     </Popover>
   )
 }
+
+    
