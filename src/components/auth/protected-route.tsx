@@ -7,6 +7,8 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/sheet-sync/app-sidebar';
+import { InventoryProvider } from '@/context/inventory-context';
+import { Header } from '@/components/sheet-sync/header';
 
 export default function ProtectedRoute({
   children,
@@ -31,13 +33,18 @@ export default function ProtectedRoute({
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" variant="sidebar" side="left">
-        <AppSidebar />
-      </Sidebar>
-      <SidebarInset>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <InventoryProvider>
+      <SidebarProvider>
+        <Sidebar collapsible="icon" variant="sidebar" side="left">
+          <AppSidebar />
+        </Sidebar>
+        <SidebarInset>
+            <div className='flex min-h-screen w-full flex-col'>
+                <Header />
+                {children}
+            </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </InventoryProvider>
   );
 }

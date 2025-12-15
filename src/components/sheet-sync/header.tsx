@@ -5,10 +5,9 @@ import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NotificationsPopover } from "@/components/sheet-sync/notifications-popover";
-import type { InventoryItem } from "@/types";
 import { useSidebar } from "../ui/sidebar";
 
-export function Header({ allItems }: { allItems: InventoryItem[] }) {
+export function Header() {
   let sidebar;
   try {
     sidebar = useSidebar();
@@ -31,7 +30,7 @@ export function Header({ allItems }: { allItems: InventoryItem[] }) {
             {/* Future search bar can go here */}
             </div>
             <div className="flex items-center gap-2">
-                <NotificationsPopover allItems={allItems} />
+                <NotificationsPopover />
             </div>
         </div>
     </header>

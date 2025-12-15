@@ -16,30 +16,27 @@ import { Separator } from "@/components/ui/separator";
 import type { InventoryItem } from "@/types";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useInventory } from "@/context/inventory-context";
+import { Loader2 } from "lucide-react";
 
 type ItemWithStatus = InventoryItem & { status: ExpiryStatus };
 
-export function NotificationsPopover({ allItems }: { allItems: InventoryItem[] }) {
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+export function NotificationsPopover() {
+    const { items, loading } = useInventory();
 
   const expiringItems = useMemo(() => {
-    // This calculation now only runs on the client.
-    if (!isClient) return [];
+    if (loading) return [];
     const now = new Date();
-    return allItems
+    return items
       .map(item => ({...item, status: getExpiryStatus(item.expiryDate, now)}))
       .filter(item => item.status.status === 'expiring' || item.status.status === 'expired')
       .sort((a,b) => a.status.days - b.status.days);
-  }, [allItems, isClient]);
+  }, [items, loading]);
   
-  if (!isClient) {
+  if (loading) {
       return (
          <Button variant="outline" size="icon" className="relative" disabled>
-            <Bell className="h-5 w-5" />
+            <Loader2 className="h-4 w-4 animate-spin" />
          </Button>
       )
   }
